@@ -2,13 +2,10 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # Your bot token
-BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
+BOT_TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY"
 
 # Your Stripe Payment Link
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/aEUeUYaneecoeY03cc"
-
-# Webhook URL
-WEBHOOK_URL = "https://bot-1-grpp.onrender.com"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Start command handler to display payment options."""
@@ -67,16 +64,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 if __name__ == "__main__":
     # Initialize the bot application
-   app = ApplicationBuilder().token("7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY").build()
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     # Handlers for the commands and button clicks
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
 
-    # Run the webhook
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=8000,
-        url_path=f"{7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY}",
-        webhook_url=f"https://bot-1-grpp.onrender.com/{7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY}"
-    )
+    # Start the bot
+    app.run_polling()
