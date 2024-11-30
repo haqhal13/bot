@@ -79,15 +79,28 @@ application.add_handler(CallbackQueryHandler(button_callback))
 # Webhook Endpoint
 @app.route('/webhook', methods=['POST'])
 def webhook():
+    """Process incoming webhook data from Telegram."""
     try:
-        update = Update.de_json(request.get_json(force=True), application.bot)
+        update = Update.de_json(request.get_json(), application.bot)
         application.process_update(update)
     except Exception as e:
         logger.error(f"Error processing update: {e}")
     return "OK", 200
 
+# Ping Endpoint for UptimeRobot
+@app.route('/ping', methods=['HEAD', 'GET'])
+def ping():
+    """Respond to uptime monitoring services."""
+    return "Pong", 200
+
+# Root Endpoint for Debugging
+@app.route('/')
+def index():
+    """Root URL for testing."""
+    return "Telegram Bot is running!", 200
+
 if __name__ == '__main__':
     # Set webhook
-    application.run_task(application.bot.set_webhook(f"{WEBHOOK_URL}/webhook"))
+    application.bot.set_webhook(f"{WEBHOOK_URL}/webhook")
     # Run Flask App
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8443)))
