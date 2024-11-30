@@ -67,7 +67,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 if __name__ == "__main__":
     # Initialize the bot application
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app = ApplicationBuilder().token(7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY.build()
 
     # Handlers for the commands and button clicks
     app.add_handler(CommandHandler("start", start))
@@ -77,6 +77,6 @@ if __name__ == "__main__":
     app.run_webhook(
         listen="0.0.0.0",
         port=8000,
-        url_path=f"{BOT_TOKEN}",
-        webhook_url=f"{WEBHOOK_URL}/{BOT_TOKEN}"
+        url_path=f"{7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY}",
+        webhook_url=f"https://bot-1-grpp.onrender.com/{7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY}"
     )
