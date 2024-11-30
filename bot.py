@@ -1,76 +1,100 @@
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram.ext import (
+    Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
+)
 from flask import Flask, request
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-import os
+import logging
 
-# Example token and webhook URL
-BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
-WEBHOOK_URL = 'https://bot-1-f2wh.onrender.com'
+# Configure logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
-if not BOT_TOKEN or not WEBHOOK_URL:
-    raise ValueError("BOT_TOKEN and WEBHOOK_URL must be set.")
+# Replace with your bot token and webhook URL
+BOT_TOKEN = "YOUR_BOT_TOKEN"
+WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
+ADMIN_CHAT_ID = "YOUR_ADMIN_CHAT_ID"
 
-# Flask app for webhook handling
-app = Flask(__name__)
+# Create the Flask app for webhook handling
+flask_app = Flask(__name__)
 
-# Telegram bot application
-application = Application.builder().token(BOT_TOKEN).build()
+# Telegram application
+app = Application.builder().token(BOT_TOKEN).build()
 
-# Root route to respond to requests at "/"
-@app.route("/", methods=["GET"])
-def index():
-    return "Telegram Bot is running!", 200
-
-# Command handlers
+# /start command handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send a welcome message when the /start command is received."""
     intro_text = (
-        "👋 Welcome to the VIP Bot!💎\n\n"
-        "Access exclusive content instantly. Choose your subscription plan or contact support."
+        "👋 Welcome to the BADDIES FACTORY VIP Bot!\n\n"
+        "💎 Access exclusive VIP content instantly with a growing collection every day.\n"
+        "Choose your subscription plan below or contact support for assistance."
     )
     keyboard = [
         [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="1_month"),
-         InlineKeyboardButton("3 MONTHS (£19.75)", callback_data="3_months")],
-        [InlineKeyboardButton("Support", url="https://t.me/YourSupportHandle")]
+         InlineKeyboardButton("LIFETIME (£10)", callback_data="lifetime")],
+        [InlineKeyboardButton("Support", callback_data="support")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(intro_text, reply_markup=reply_markup)
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Type /start to begin using the bot.")
+# Fallback handler
+async def fallback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle unrecognized commands or messages."""
+    await update.message.reply_text("I'm sorry, I didn't understand that command.")
 
-# Callback query handler
-async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+# Callback query handler for subscriptions
+async def subscription_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
-    subscription_message = f"You selected: {query.data.replace('_', ' ').title()}"
-    await query.edit_message_text(subscription_message)
 
-# Webhook route for Telegram updates
-@app.route(f"/{BOT_TOKEN}", methods=["POST"])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    application.process_update(update)
-    return "OK", 200
+    context.user_data["subscription"] = query.data.replace('_', ' ').upper()
 
-# Health check route for UptimeRobot
-@app.route("/health", methods=["GET"])
-def health_check():
-    return "OK", 200
+    text = (
+        f"📄 You selected the **{context.user_data['subscription']}** plan.\n\n"
+        "Choose your preferred payment method below:\n"
+        "💳 **Apple Pay / Google Pay:** Instant VIP access (emailed immediately).\n"
+        "⚡ **Crypto:** VIP link will be sent within 30 minutes during BST hours.\n"
+        "📧 **PayPal:** VIP link will be sent within 30 minutes during BST hours."
+    )
+    keyboard = [
+        [InlineKeyboardButton("Apple Pay / Google Pay", callback_data="apple_google_pay"),
+         InlineKeyboardButton("Crypto", callback_data="crypto")],
+        [InlineKeyboardButton("PayPal", callback_data="paypal"),
+         InlineKeyboardButton("Go Back", callback_data="go_back_main")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(text=text, reply_markup=reply_markup)
 
-# Initialize handlers
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CommandHandler("help", help_command))
-application.add_handler(CallbackQueryHandler(handle_subscription))
+# Webhook handler
+@flask_app.route('/webhook', methods=['POST'])
+def webhook_handler():
+    """Handle incoming updates via webhook."""
+    update = Update.de_json(request.get_json(force=True), app.bot)
+    logger.info(f"Webhook triggered with update: {update}")
+    app.update_queue.put(update)
+    return "OK"
 
-async def setup_webhook():
-    """Set the Telegram bot webhook."""
-    await application.bot.set_webhook(f"{WEBHOOK_URL}/{BOT_TOKEN}")
+# Error handler
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Log errors caused by updates."""
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+
+# Main function
+def main():
+    # Add command handlers
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(subscription_handler, pattern="^(1_month|lifetime)$"))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, fallback))
+
+    # Add error handler
+    app.add_error_handler(error_handler)
+
+    # Set webhook
+    app.bot.set_webhook(url=WEBHOOK_URL)
+
+    # Run Flask app for webhook handling
+    flask_app.run(host="0.0.0.0", port=8443)
 
 if __name__ == "__main__":
-    import asyncio
-    # Set up webhook asynchronously
-    asyncio.run(setup_webhook())
-
-    # Start Flask app
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    main()
