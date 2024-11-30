@@ -1,27 +1,35 @@
-import os
-from telegram.ext import ApplicationBuilder, CommandHandler
+from flask import Flask, request
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Your bot token
+# Replace with your bot token and webhook URL
 BOT_TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY"
-WEBHOOK_URL = "https://your-deployed-url.com"  # Replace with your deployment URL
+WEBHOOK_URL = "https://bot-1-f2wh.onrender.com"
 
-async def start(update, context):
-    """Handles the /start command."""
+# Initialize Flask app and Telegram bot application
+app = Flask(__name__)
+application = ApplicationBuilder().token(BOT_TOKEN).build()
+
+# Define the /start command
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Hello! I am your bot, ready to assist!")
 
+# Set up Telegram command handlers
+application.add_handler(CommandHandler("start", start))
+
+# Define webhook route
+@app.route(f"/{BOT_TOKEN}", methods=["POST"])
+def webhook():
+    """Handle incoming updates from Telegram."""
+    data = request.get_json()
+    if data:
+        update = Update.de_json(data, application.bot)
+        application.process_update(update)
+    return "OK", 200
+
 if __name__ == "__main__":
-    # Create the bot application
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    # Set the webhook
+    application.bot.set_webhook(f"{WEBHOOK_URL}/{BOT_TOKEN}")
 
-    # Add the /start command handler
-    app.add_handler(CommandHandler("start", start))
-
-    # Delete any existing webhook to avoid conflicts
-    app.bot.delete_webhook()
-
-    # Start the webhook
-    app.run_webhook(
-        listen="0.0.0.0",  # Listen on all network interfaces
-        port=int(os.environ.get("PORT", 8443)),  # Use PORT environment variable or default to 8443
-        webhook_url=f"{WEBHOOK_URL}/{BOT_TOKEN}"  # Webhook endpoint
-    )
+    # Run the Flask server
+    app.run(host="0.0.0.0", port=5000)
