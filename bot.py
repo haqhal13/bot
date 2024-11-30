@@ -1,6 +1,6 @@
 import logging
 from flask import Flask, request
-from telegram import Update, Bot, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 import os
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # Handlers
 def start(update: Update, context):
-    """Handler for the /start command"""
+    """Handle the /start command."""
     keyboard = [
         [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="1_month")],
         [InlineKeyboardButton("LIFETIME (£10)", callback_data="lifetime")],
@@ -40,7 +40,7 @@ def start(update: Update, context):
     )
 
 def button_callback(update: Update, context):
-    """Handler for button interactions"""
+    """Handle button clicks."""
     query = update.callback_query
     query.answer()
     if query.data == "1_month":
@@ -78,25 +78,18 @@ def button_callback(update: Update, context):
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CallbackQueryHandler(button_callback))
 
-# Webhook Route
+# Webhook
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    """Process incoming webhook updates"""
-    update = Update.de_json(request.get_json(), application.bot)
+    """Process incoming updates from Telegram."""
+    update = Update.de_json(request.get_json(force=True), application.bot)
     application.process_update(update)
     return "OK", 200
 
-# Health Check Route for Uptime Monitoring
-@app.route('/')
-def index():
-    """Simple health check endpoint for uptime monitoring"""
-    return "Bot is running!", 200
-
 if __name__ == '__main__':
     # Set webhook
-    application.bot.set_webhook(f"{WEBHOOK_URL}/webhook")
-    logger.info("Webhook set at: %s/webhook", WEBHOOK_URL)
-
-    # Run Flask App
-    port = int(os.environ.get("PORT", 8443))  # Default Render port
-    app.run(host="0.0.0.0", port=port)
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.environ.get("PORT", 8443)),
+        webhook_url=f"{WEBHOOK_URL}/webhook",
+    )
