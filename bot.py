@@ -2,7 +2,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # Your bot token
-BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
+BOT_TOKEN = 'YOUR_BOT_TOKEN'
 
 # Your Stripe Payment Link
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/aEUeUYaneecoeY03cc"
@@ -64,11 +64,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 if __name__ == "__main__":
     # Initialize the bot application
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    # Handlers for the commands and button clicks
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button_handler))
+    # Set up command and callback handlers
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(button_handler))
 
-    # Start the bot
-    application.run_polling()
+    # Use webhook for updates
+    PORT = 8443
+    WEBHOOK_URL = "https://<your_render_app_url>/webhook"  # Replace with your Render app URL
+
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=PORT,
+        webhook_url=WEBHOOK_URL,
+    )
