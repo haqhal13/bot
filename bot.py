@@ -88,6 +88,12 @@ def webhook():
         return "OK", 200
     return "Forbidden", 403
 
+# Root Endpoint for Health Checks
+@app.route('/')
+def index():
+    """Root endpoint for health checks."""
+    return "The BADDIES FACTORY VIP Bot is running.", 200
+
 if __name__ == '__main__':
     # Set the webhook for Telegram
     application.bot.set_webhook(f"{WEBHOOK_URL}/webhook")
