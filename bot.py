@@ -1,29 +1,13 @@
 from flask import Flask, request
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-import logging
 
-# Telegram Bot Token and Admin Chat ID
-TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
-ADMIN_CHAT_ID = "834523364"  # Replace with your Telegram numeric ID
-
-# Webhook URL
-WEBHOOK_URL = "https://bot-1-f2wh.onrender.com"
-
-# Initialize Flask app
-app = Flask(__name__)
-
-# Enable logging
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-
-# Initialize the bot
-bot_app = Application.builder().token(TOKEN).build()
+TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
+ADMIN_CHAT_ID = 123456789  # Replace with your numeric Telegram user ID
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle the /start command and show subscription options."""
+    """Start the bot and show subscription options."""
     intro_text = (
         "👋 Welcome to the BADDIES FACTORY VIP Bot!\n\n"
         "💎 Access exclusive VIP content instantly with a growing collection every day.\n"
@@ -43,11 +27,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def subscription_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle subscription selection and show payment options."""
+    """Handle subscription plan selection."""
     query = update.callback_query
     await query.answer()
 
-    # Store the selected subscription plan
     context.user_data["subscription"] = query.data.replace('_', ' ').upper()
 
     text = (
@@ -68,27 +51,39 @@ async def subscription_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def apple_google_pay_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle Apple Pay/Google Pay selection."""
+    """Handle Apple Pay/Google Pay selection with embedded mini-app support."""
     query = update.callback_query
     await query.answer()
 
     text = (
         "**Apple Pay / Google Pay Payment:**\n\n"
-        "Complete your payment using the links below:\n\n"
-        "• **1 MONTH (£6.75):** [Click Here](https://buy.stripe.com/eVa9AE7b23xK036eUW)\n"
-        "• **LIFETIME (£10):** [Click Here](https://buy.stripe.com/eVa9AE7b23xK036eUW)\n\n"
+        "Complete your payment using the buttons below:\n\n"
+        "• **1 MONTH (£6.75)** - Instant access\n"
+        "• **LIFETIME (£10)** - Instant access\n\n"
         "After payment, your VIP link will be emailed immediately!"
     )
     keyboard = [
-        [InlineKeyboardButton("I've Paid", callback_data="paid"),
-         InlineKeyboardButton("Go Back", callback_data="go_back_subscription")]
+        [
+            InlineKeyboardButton(
+                "1 MONTH (£6.75)", web_app=WebAppInfo(url="https://buy.stripe.com/eVa9AE7b23xK036eUW")
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "LIFETIME (£10)", web_app=WebAppInfo(url="https://buy.stripe.com/eVa9AE7b23xK036eUW")
+            )
+        ],
+        [
+            InlineKeyboardButton("I've Paid", callback_data="paid"),
+            InlineKeyboardButton("Go Back", callback_data="go_back_subscription"),
+        ],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(text=text, reply_markup=reply_markup)
 
 
 async def crypto_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle crypto payment selection."""
+    """Handle Crypto payment selection."""
     query = update.callback_query
     await query.answer()
 
@@ -103,12 +98,7 @@ async def crypto_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         "Your VIP link will be sent within 30 minutes during BST hours."
     )
     keyboard = [
-        [InlineKeyboardButton("I've Paid", callback_data="paid"),
-         InlineKeyboardButton("Go Back", callback_data="go_back_subscription")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text(text=text, reply_markup=reply_markup)
-
+        [InlineKeyboardButton("I've Paid", callback
 
 async def paypal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle PayPal payment selection."""
