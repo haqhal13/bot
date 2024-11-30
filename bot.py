@@ -6,7 +6,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 BOT_TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com"  # Replace with your Render app URL
 
-# Your Stripe Payment Link
+# Stripe Payment Link
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/aEUeUYaneecoeY03cc"
 
 # Define the start command
@@ -22,7 +22,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("Send £10 using one of the options below:", reply_markup=reply_markup)
 
-# Define the button handler
+# Button callback handler
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle button clicks."""
     query = update.callback_query
@@ -67,10 +67,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await start(update, context)
 
 if __name__ == "__main__":
-    # Create the bot application
+    # Initialize the bot application
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    # Handlers for the commands and button clicks
+    # Add command and callback handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
 
