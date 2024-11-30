@@ -2,12 +2,11 @@ import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler
 
-# Replace with your actual bot token
+# Replace with your bot token
 BOT_TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY"
 
-# Replace with your Render app's URL
+# Replace with your Render URL
 WEBHOOK_URL = f"https://bot-1-f2wh.onrender.com/{BOT_TOKEN}"
-
 
 async def start(update: Update, context):
     """Handles the /start command."""
