@@ -10,14 +10,15 @@ ADMIN_CHAT_ID = 834523364  # Replace with your Telegram Admin Chat ID
 # Initialize Flask app
 flask_app = Flask(__name__)
 
-@flask_app.route('/ping', methods=['GET'])
-def ping():
-    return "Pong", 200
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    # This receives updates from Telegram
+    update = Update.de_json(request.get_json(), bot)
+    dispatcher.process_update(update)
+    return "OK", 200
 
-# Telegram bot setup
-bot_app = Application.builder().token(TOKEN).build()
 
-# Start Command
+@application.message_handler(commands=['start'])
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     intro_text = (
         "👋 Welcome to the BADDIES FACTORY VIP Bot!\n\n"
@@ -30,9 +31,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         [InlineKeyboardButton("Support", callback_data="support")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-
-    if update.message:
-        await update.message.reply_text(intro_text, reply_markup=reply_markup)
+    await update.message.reply_text(intro_text, reply_markup=reply_markup)
 
 # Subscription Plan Handler
 async def subscription_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
