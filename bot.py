@@ -1,7 +1,7 @@
 from flask import Flask, request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-import os  # Ensure the os module is imported
+import os
 
 # Example token and webhook URL
 BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
@@ -15,6 +15,11 @@ app = Flask(__name__)
 
 # Telegram bot application
 application = Application.builder().token(BOT_TOKEN).build()
+
+# Root route to respond to requests at "/"
+@app.route("/", methods=["GET"])
+def index():
+    return "Telegram Bot is running!", 200
 
 # Command handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -62,10 +67,10 @@ async def setup_webhook():
     await application.bot.set_webhook(f"{WEBHOOK_URL}/{BOT_TOKEN}")
 
 if __name__ == "__main__":
-    import asyncio  # Import asyncio for async operations
+    import asyncio
     # Set up webhook asynchronously
     asyncio.run(setup_webhook())
 
     # Start Flask app
-    port = int(os.environ.get("PORT", 5000))  # Ensure PORT is fetched from environment variables
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
