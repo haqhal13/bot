@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 # Handlers
 def start(update: Update, context):
-    """Handle the /start command."""
     keyboard = [
         [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="1_month")],
         [InlineKeyboardButton("LIFETIME (£10)", callback_data="lifetime")],
@@ -40,7 +39,6 @@ def start(update: Update, context):
     )
 
 def button_callback(update: Update, context):
-    """Handle button clicks."""
     query = update.callback_query
     query.answer()
     if query.data == "1_month":
@@ -81,22 +79,15 @@ application.add_handler(CallbackQueryHandler(button_callback))
 # Webhook Endpoint
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    """Process incoming updates from Telegram."""
-    if request.method == "POST":
+    try:
         update = Update.de_json(request.get_json(force=True), application.bot)
         application.process_update(update)
-        return "OK", 200
-    return "Forbidden", 403
-
-# Root Endpoint for Health Checks
-@app.route('/')
-def index():
-    """Root endpoint for health checks."""
-    return "The BADDIES FACTORY VIP Bot is running.", 200
+    except Exception as e:
+        logger.error(f"Error processing update: {e}")
+    return "OK", 200
 
 if __name__ == '__main__':
-    # Set the webhook for Telegram
-    application.bot.set_webhook(f"{WEBHOOK_URL}/webhook")
-    
-    # Run the Flask app
+    # Set webhook
+    application.run_task(application.bot.set_webhook(f"{WEBHOOK_URL}/webhook"))
+    # Run Flask App
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8443)))
