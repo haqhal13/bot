@@ -4,8 +4,8 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 import os
 
 # Load environment variables
-TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')  # Add this in Render's environment variables
-WEBHOOK_URL = os.getenv('WEBHOOK_URL')  # Your Render app's URL + /<BOT_TOKEN>
+TOKEN = os.getenv('7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY')  # Add this in Render's environment variables
+WEBHOOK_URL = os.getenv('https://bot-1-f2wh.onrender.com')  # Your Render app's URL + /<BOT_TOKEN>
 
 if not TOKEN or not WEBHOOK_URL:
     raise ValueError("Please set TELEGRAM_BOT_TOKEN and WEBHOOK_URL environment variables.")
