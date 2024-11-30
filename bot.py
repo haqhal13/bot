@@ -1,29 +1,24 @@
 from flask import Flask, request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-import os
 
-# Load environment variables
-# Correctly fetch environment variables
-TOKEN = os.getenv('7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY')  # Ensure TELEGRAM_BOT_TOKEN is set in Render
-WEBHOOK_URL = os.getenv('https://bot-1-f2wh.onrender.com')  # Ensure WEBHOOK_URL is set in Render
+# Example token and webhook URL
+BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
+WEBHOOK_URL = 'https://bot-1-f2wh.onrender.com'
 
-# Check for missing environment variables
-if not TOKEN or not WEBHOOK_URL:
-    print(f"TOKEN: {TOKEN}")  # Debugging output
-    print(f"WEBHOOK_URL: {WEBHOOK_URL}")  # Debugging output
-    raise ValueError("Please set TELEGRAM_BOT_TOKEN and WEBHOOK_URL environment variables.")
+if not BOT_TOKEN or not WEBHOOK_URL:
+    raise ValueError("BOT_TOKEN and WEBHOOK_URL must be set.")
 
 # Flask app for webhook handling
 app = Flask(__name__)
 
 # Telegram bot application
-application = Application.builder().token(TOKEN).build()
+application = Application.builder().token(BOT_TOKEN).build()
 
 # Command handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     intro_text = (
-        "👋 Welcome to the VIP Bot!💎\\n\\n"
+        "👋 Welcome to the VIP Bot!💎\n\n"
         "Access exclusive content instantly. Choose your subscription plan or contact support."
     )
     keyboard = [
@@ -45,7 +40,7 @@ async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
     await query.edit_message_text(subscription_message)
 
 # Webhook route for Telegram updates
-@app.route(f"/{TOKEN}", methods=["POST"])
+@app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():
     update = Update.de_json(request.get_json(force=True), application.bot)
     application.process_update(update)
@@ -63,8 +58,8 @@ application.add_handler(CallbackQueryHandler(handle_subscription))
 
 if __name__ == "__main__":
     # Set webhook
-    application.bot.set_webhook(f"{WEBHOOK_URL}/{TOKEN}")
+    application.bot.set_webhook(f"{WEBHOOK_URL}/{BOT_TOKEN}")
 
     # Start Flask app
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5000))  # Default port for Flask
     app.run(host="0.0.0.0", port=port)
