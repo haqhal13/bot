@@ -1,4 +1,4 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # Your bot token
@@ -11,18 +11,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Start command handler to display payment options."""
     keyboard = [
         [InlineKeyboardButton("PayPal", callback_data="paypal")],
-        [
-            InlineKeyboardButton(
-                "Stripe (Apple Pay/Google Pay)",
-                web_app=WebAppInfo(url=STRIPE_PAYMENT_LINK),
-            )
-        ],
+        [InlineKeyboardButton("Stripe (Apple Pay/Google Pay)", callback_data="stripe")],
         [InlineKeyboardButton("Crypto", callback_data="crypto")],
         [InlineKeyboardButton("I Paid", callback_data="paid")],
         [InlineKeyboardButton("Go Back", callback_data="go_back")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Send $20 using one of the options below:", reply_markup=reply_markup)
+    await update.message.reply_text("Send £10 using one of the options below:", reply_markup=reply_markup)
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle button clicks."""
@@ -41,10 +36,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 "✅SEND PAYMENT SCREENSHOT TO @ZAKIVIP1 AND PROVIDE YOUR FULL PAYPAL NAME"
             )
         )
+    elif query.data == "stripe":
+        await query.edit_message_text(
+            text=(
+                "Click the button below to complete payment via Stripe:\n\n"
+                f"[Pay Now with Stripe]({STRIPE_PAYMENT_LINK})"
+            ),
+            parse_mode="Markdown",
+        )
     elif query.data == "crypto":
         await query.edit_message_text(
             text=(
-                "➡️Send $20 in Crypto:\n\n"
+                "➡️Send $14 in Crypto:\n\n"
                 "Bitcoin: `1ExampleBTCAddress`\n"
                 "Ethereum: `0xExampleETHAddress`\n\n"
                 "➡️Click I Paid after completing the payment.\n"
