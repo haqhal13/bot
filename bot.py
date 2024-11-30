@@ -10,11 +10,9 @@ ADMIN_CHAT_ID = 834523364  # Replace with your Telegram Admin Chat ID
 # Initialize Flask app
 flask_app = Flask(__name__)
 
-# Health Check Endpoint
-@flask_app.route("/ping", methods=["GET"])
+@flask_app.route('/ping', methods=['GET'])
 def ping():
-    """Health check endpoint."""
-    return "Bot is running!", 200
+    return "Pong", 200
 
 # Telegram bot setup
 bot_app = Application.builder().token(TOKEN).build()
