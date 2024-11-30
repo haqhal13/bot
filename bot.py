@@ -78,18 +78,19 @@ def button_callback(update: Update, context):
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CallbackQueryHandler(button_callback))
 
-# Webhook
+# Webhook Endpoint
 @app.route('/webhook', methods=['POST'])
 def webhook():
     """Process incoming updates from Telegram."""
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    application.process_update(update)
-    return "OK", 200
+    if request.method == "POST":
+        update = Update.de_json(request.get_json(force=True), application.bot)
+        application.process_update(update)
+        return "OK", 200
+    return "Forbidden", 403
 
 if __name__ == '__main__':
-    # Set webhook
-    application.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.environ.get("PORT", 8443)),
-        webhook_url=f"{WEBHOOK_URL}/webhook",
-    )
+    # Set the webhook for Telegram
+    application.bot.set_webhook(f"{WEBHOOK_URL}/webhook")
+    
+    # Run the Flask app
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8443)))
