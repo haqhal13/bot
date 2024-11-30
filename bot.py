@@ -9,9 +9,8 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com"  # Replace with your Render app 
 # Stripe Payment Link
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/aEUeUYaneecoeY03cc"
 
-# Define the start command
+# Start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Start command handler to display payment options."""
     keyboard = [
         [InlineKeyboardButton("PayPal", callback_data="paypal")],
         [InlineKeyboardButton("Stripe (Apple Pay/Google Pay)", callback_data="stripe")],
@@ -24,7 +23,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 # Button callback handler
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle button clicks."""
     query = update.callback_query
     await query.answer()
 
@@ -67,16 +65,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await start(update, context)
 
 if __name__ == "__main__":
-    # Initialize the bot application
     app = ApplicationBuilder().token(BOT_TOKEN).build()
-
-    # Add command and callback handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
 
     # Start the webhook
     app.run_webhook(
-        listen="0.0.0.0",  # Listen on all interfaces
-        port=int(os.environ.get("PORT", 8000)),  # Use the PORT environment variable or default to 8000
-        webhook_url=f"{WEBHOOK_URL}/{BOT_TOKEN}"  # Webhook URL with bot token
+        listen="0.0.0.0",
+        port=int(os.environ.get("PORT", 8000)),
+        webhook_url=f"{WEBHOOK_URL}/{BOT_TOKEN}"
     )
