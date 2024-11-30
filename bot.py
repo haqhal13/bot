@@ -206,3 +206,7 @@ def webhook() -> str:
 if __name__ == "__main__":
     bot_app.run_webhook(
         listen="0.0.0.0",
+        port=10000,  # Render detects the open port automatically
+        url_path="",  # The bot webhook path
+        webhook_url=WEBHOOK_URL
+    )
