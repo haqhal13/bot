@@ -1,15 +1,29 @@
+from flask import Flask, request
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-import os
+import logging
 
+# Telegram Bot Token and Admin Chat ID
 TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
-ADMIN_CHAT_ID = 834523364  # Replace with your numeric Telegram user ID
-PORT = int(os.environ.get('PORT', 8443))  # Default port for Telegram webhooks
+ADMIN_CHAT_ID = "834523364"  # Replace with your Telegram numeric ID
 
-WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/" + TOKEN
+# Webhook URL
+WEBHOOK_URL = "https://bot-1-f2wh.onrender.com"
+
+# Initialize Flask app
+app = Flask(__name__)
+
+# Enable logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+
+# Initialize the bot
+bot_app = Application.builder().token(TOKEN).build()
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle the /start command and show subscription options."""
     intro_text = (
         "👋 Welcome to the BADDIES FACTORY VIP Bot!\n\n"
         "💎 Access exclusive VIP content instantly with a growing collection every day.\n"
@@ -29,9 +43,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def subscription_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle subscription selection and show payment options."""
     query = update.callback_query
     await query.answer()
 
+    # Store the selected subscription plan
     context.user_data["subscription"] = query.data.replace('_', ' ').upper()
 
     text = (
@@ -52,35 +68,27 @@ async def subscription_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def apple_google_pay_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle Apple Pay/Google Pay selection."""
     query = update.callback_query
     await query.answer()
 
     text = (
-        "💳 **Apple Pay / Google Pay Payment:**\n\n"
-        "Select your subscription plan below and complete your payment:\n\n"
-        "• **1 MONTH (£6.75)** - Instant access\n"
-        "• **LIFETIME (£10)** - Instant access\n\n"
+        "**Apple Pay / Google Pay Payment:**\n\n"
+        "Complete your payment using the links below:\n\n"
+        "• **1 MONTH (£6.75):** [Click Here](https://buy.stripe.com/eVa9AE7b23xK036eUW)\n"
+        "• **LIFETIME (£10):** [Click Here](https://buy.stripe.com/eVa9AE7b23xK036eUW)\n\n"
         "After payment, your VIP link will be emailed immediately!"
     )
     keyboard = [
-        [
-            InlineKeyboardButton(
-                "1 MONTH (£6.75)",
-                web_app=WebAppInfo(url="https://buy.stripe.com/eVa9AE7b23xK036eUW"),
-            ),
-            InlineKeyboardButton(
-                "LIFETIME (£10)",
-                web_app=WebAppInfo(url="https://buy.stripe.com/eVa9AE7b23xK036eUW"),
-            ),
-        ],
-        [InlineKeyboardButton("I've Paid", callback_data="paid")],
-        [InlineKeyboardButton("Go Back", callback_data="go_back_subscription")],
+        [InlineKeyboardButton("I've Paid", callback_data="paid"),
+         InlineKeyboardButton("Go Back", callback_data="go_back_subscription")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(text=text, reply_markup=reply_markup)
 
 
 async def crypto_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle crypto payment selection."""
     query = update.callback_query
     await query.answer()
 
@@ -103,6 +111,7 @@ async def crypto_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def paypal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle PayPal payment selection."""
     query = update.callback_query
     await query.answer()
 
@@ -125,6 +134,7 @@ async def paypal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def paid_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle 'I've Paid' button clicks and notify admin."""
     query = update.callback_query
     await query.answer()
 
@@ -136,11 +146,10 @@ async def paid_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         f"📄 Subscription: {subscription}\n"
     )
 
-    try:
-        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_message)
-    except Exception as e:
-        print(f"Error sending admin notification: {e}")
+    # Notify the admin
+    await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_message)
 
+    # Notify the user
     text = (
         "✅ Thank you for your payment! Please send a screenshot of your transaction "
         "or provide the transaction ID for verification to @zakivip1.\n\n"
@@ -151,22 +160,49 @@ async def paid_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await query.edit_message_text(text=text, reply_markup=reply_markup)
 
 
-def main() -> None:
-    app = Application.builder().token(TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(subscription_handler, pattern="^(1_month|lifetime)$"))
-    app.add_handler(CallbackQueryHandler(apple_google_pay_handler, pattern="^apple_google_pay$"))
-    app.add_handler(CallbackQueryHandler(crypto_handler, pattern="^crypto$"))
-    app.add_handler(CallbackQueryHandler(paypal_handler, pattern="^paypal$"))
-    app.add_handler(CallbackQueryHandler(paid_handler, pattern="^paid$"))
-
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=PORT,
-        webhook_url=WEBHOOK_URL,
+async def support_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle support button clicks."""
+    text = (
+        "💬 Support:\n"
+        "For any issues, contact @zakivip1.\n"
+        "Available from 8:00 AM to 12:00 AM BST."
     )
+    keyboard = [[InlineKeyboardButton("Go Back", callback_data="go_back_main")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.callback_query.edit_message_text(text=text, reply_markup=reply_markup)
+
+
+async def go_back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle go back button clicks."""
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "go_back_main":
+        await start(update, context)
+    elif query.data == "go_back_subscription":
+        await subscription_handler(update, context)
+
+
+# Set up Telegram bot handlers
+bot_app.add_handler(CommandHandler("start", start))
+bot_app.add_handler(CallbackQueryHandler(subscription_handler, pattern="^(1_month|lifetime)$"))
+bot_app.add_handler(CallbackQueryHandler(apple_google_pay_handler, pattern="^apple_google_pay$"))
+bot_app.add_handler(CallbackQueryHandler(crypto_handler, pattern="^crypto$"))
+bot_app.add_handler(CallbackQueryHandler(paypal_handler, pattern="^paypal$"))
+bot_app.add_handler(CallbackQueryHandler(paid_handler, pattern="^paid$"))
+bot_app.add_handler(CallbackQueryHandler(support_handler, pattern="^support$"))
+bot_app.add_handler(CallbackQueryHandler(go_back_handler, pattern="^go_back_.*$"))
+
+
+@app.route("/", methods=["GET", "POST"])
+def webhook() -> str:
+    """Webhook endpoint for Telegram updates."""
+    if request.method == "POST":
+        bot_app.update_queue.put(request.get_json())
+        return "ok", 200
+    return "Bot is running!"
 
 
 if __name__ == "__main__":
-    main()
+    bot_app.run_webhook(
+        listen="0.0.0.0",
