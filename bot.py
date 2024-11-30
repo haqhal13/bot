@@ -7,6 +7,9 @@ BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
 # Your Stripe Payment Link
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/aEUeUYaneecoeY03cc"
 
+# Webhook URL
+WEBHOOK_URL = "https://bot-1-grpp.onrender.com"
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Start command handler to display payment options."""
     keyboard = [
@@ -66,16 +69,14 @@ if __name__ == "__main__":
     # Initialize the bot application
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    # Set up command and callback handlers
+    # Handlers for the commands and button clicks
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
 
-    # Use webhook for updates
-    PORT = 8443
-    WEBHOOK_URL = "https://<your_render_app_url>/webhook"  # Replace with your Render app URL
-
+    # Run the webhook
     app.run_webhook(
         listen="0.0.0.0",
-        port=PORT,
-        webhook_url=WEBHOOK_URL,
+        port=8000,
+        url_path=f"{BOT_TOKEN}",
+        webhook_url=f"{WEBHOOK_URL}/{BOT_TOKEN}"
     )
