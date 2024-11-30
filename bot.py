@@ -1,8 +1,12 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+import os
 
 TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
 ADMIN_CHAT_ID = 834523364  # Replace with your numeric Telegram user ID
+PORT = int(os.environ.get('PORT', 8443))  # Default port for Telegram webhooks
+
+WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/" + TOKEN
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -62,7 +66,7 @@ async def apple_google_pay_handler(update: Update, context: ContextTypes.DEFAULT
         [
             InlineKeyboardButton(
                 "1 MONTH (£6.75)",
-                web_app=WebAppInfo(url="https://buy.stripe.com/8wM0041QI3xK3ficMP"),
+                web_app=WebAppInfo(url="https://buy.stripe.com/eVa9AE7b23xK036eUW"),
             ),
             InlineKeyboardButton(
                 "LIFETIME (£10)",
@@ -147,27 +151,6 @@ async def paid_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await query.edit_message_text(text=text, reply_markup=reply_markup)
 
 
-async def support_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    text = (
-        "💬 Support:\n"
-        "For any issues, contact @zakivip1.\n"
-        "Available from 8:00 AM to 12:00 AM BST."
-    )
-    keyboard = [[InlineKeyboardButton("Go Back", callback_data="go_back_main")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.callback_query.edit_message_text(text=text, reply_markup=reply_markup)
-
-
-async def go_back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    await query.answer()
-
-    if query.data == "go_back_main":
-        await start(update, context)
-    elif query.data == "go_back_subscription":
-        await subscription_handler(update, context)
-
-
 def main() -> None:
     app = Application.builder().token(TOKEN).build()
 
@@ -177,10 +160,12 @@ def main() -> None:
     app.add_handler(CallbackQueryHandler(crypto_handler, pattern="^crypto$"))
     app.add_handler(CallbackQueryHandler(paypal_handler, pattern="^paypal$"))
     app.add_handler(CallbackQueryHandler(paid_handler, pattern="^paid$"))
-    app.add_handler(CallbackQueryHandler(support_handler, pattern="^support$"))
-    app.add_handler(CallbackQueryHandler(go_back_handler, pattern="^go_back_(main|subscription)$"))
 
-    app.run_polling()
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=PORT,
+        webhook_url=WEBHOOK_URL,
+    )
 
 
 if __name__ == "__main__":
