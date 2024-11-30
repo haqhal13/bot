@@ -1,6 +1,6 @@
 import logging
 from flask import Flask, request
-from telegram import Update, Bot, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 import os
 
@@ -22,14 +22,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Handlers
-def start(update: Update, context):
+async def start(update: Update, context):
+    """Handles the /start command."""
     keyboard = [
         [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="1_month")],
         [InlineKeyboardButton("LIFETIME (£10)", callback_data="lifetime")],
         [InlineKeyboardButton("Support", callback_data="support")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(
+    await update.message.reply_text(
         text=(
             "👋 Welcome to the BADDIES FACTORY VIP Bot!\n\n"
             "💎 Access exclusive VIP content instantly with a growing collection every day. "
@@ -38,11 +39,12 @@ def start(update: Update, context):
         reply_markup=reply_markup,
     )
 
-def button_callback(update: Update, context):
+async def button_callback(update: Update, context):
+    """Handles button clicks from the InlineKeyboardMarkup."""
     query = update.callback_query
-    query.answer()
+    await query.answer()
     if query.data == "1_month":
-        query.edit_message_text(
+        await query.edit_message_text(
             text=(
                 "**Apple Pay / Google Pay Payment:**\n\n"
                 "Complete your payment using the links below:\n\n"
@@ -53,7 +55,7 @@ def button_callback(update: Update, context):
             parse_mode="Markdown",
         )
     elif query.data == "lifetime":
-        query.edit_message_text(
+        await query.edit_message_text(
             text=(
                 "**Apple Pay / Google Pay Payment:**\n\n"
                 "Complete your payment using the links below:\n\n"
@@ -64,7 +66,7 @@ def button_callback(update: Update, context):
             parse_mode="Markdown",
         )
     elif query.data == "support":
-        query.edit_message_text(
+        await query.edit_message_text(
             text=(
                 "📩 For assistance, please contact our support team at: "
                 "[Support Email](mailto:support@example.com)."
@@ -79,12 +81,21 @@ application.add_handler(CallbackQueryHandler(button_callback))
 # Webhook
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    update = Update.de_json(request.get_json(), application.bot)
-    application.process_update(update)
+    """Handles incoming updates from Telegram."""
+    update = Update.de_json(request.get_json(force=True), application.bot)
+    application.update_queue.put_nowait(update)
     return "OK", 200
+
+# Root Endpoint
+@app.route('/')
+def index():
+    """Root endpoint for testing."""
+    return "Bot is running!", 200
 
 if __name__ == '__main__':
     # Set webhook
+    application.run_polling()  # Fallback for local testing
     application.bot.set_webhook(f"{WEBHOOK_URL}/webhook")
     # Run Flask App
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8443)))
+    port = int(os.environ.get("PORT", 8443))
+    app.run(host="0.0.0.0", port=port)
