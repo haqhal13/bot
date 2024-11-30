@@ -12,7 +12,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Replace with your bot token and webhook URL
-BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
+BOT_TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 ADMIN_CHAT_ID = "834523364"
 
@@ -76,8 +76,7 @@ def webhook_handler():
     return "OK"
 
 # Error handler
-@app.error_handler
-async def error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Log errors caused by updates."""
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
 
@@ -87,6 +86,9 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(subscription_handler, pattern="^(1_month|lifetime)$"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, fallback))
+
+    # Add error handler
+    app.add_error_handler(error_handler)
 
     # Set webhook
     app.bot.set_webhook(url=WEBHOOK_URL)
