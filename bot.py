@@ -1,30 +1,11 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from telegram.ext import (
-    Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
-)
-from flask import Flask, request
-import logging
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# Configure logging
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
+ADMIN_CHAT_ID = 834523364  # Replace with your numeric Telegram user ID
 
-# Replace with your bot token and webhook URL
-BOT_TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY"
-WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
-ADMIN_CHAT_ID = "834523364"
 
-# Create the Flask app for webhook handling
-flask_app = Flask(__name__)
-
-# Telegram application
-app = Application.builder().token(BOT_TOKEN).build()
-
-# /start command handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a welcome message when the /start command is received."""
     intro_text = (
         "👋 Welcome to the BADDIES FACTORY VIP Bot!\n\n"
         "💎 Access exclusive VIP content instantly with a growing collection every day.\n"
@@ -36,14 +17,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         [InlineKeyboardButton("Support", callback_data="support")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(intro_text, reply_markup=reply_markup)
 
-# Fallback handler
-async def fallback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle unrecognized commands or messages."""
-    await update.message.reply_text("I'm sorry, I didn't understand that command.")
+    if update.message:
+        await update.message.reply_text(intro_text, reply_markup=reply_markup)
+    elif update.callback_query:
+        await update.callback_query.message.edit_text(intro_text, reply_markup=reply_markup)
 
-# Callback query handler for subscriptions
+
 async def subscription_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
@@ -66,35 +46,142 @@ async def subscription_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(text=text, reply_markup=reply_markup)
 
-# Webhook handler
-@flask_app.route('/webhook', methods=['POST'])
-def webhook_handler():
-    """Handle incoming updates via webhook."""
-    update = Update.de_json(request.get_json(force=True), app.bot)
-    logger.info(f"Webhook triggered with update: {update}")
-    app.update_queue.put(update)
-    return "OK"
 
-# Error handler
-async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Log errors caused by updates."""
-    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+async def apple_google_pay_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
 
-# Main function
-def main():
-    # Add command handlers
+    text = (
+        "💳 **Apple Pay / Google Pay Payment:**\n\n"
+        "Select your subscription plan below and complete your payment:\n\n"
+        "• **1 MONTH (£6.75)** - Instant access\n"
+        "• **LIFETIME (£10)** - Instant access\n\n"
+        "After payment, your VIP link will be emailed immediately!"
+    )
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "1 MONTH (£6.75)",
+                web_app=WebAppInfo(url="https://buy.stripe.com/8wM0041QI3xK3ficMP"),
+            ),
+            InlineKeyboardButton(
+                "LIFETIME (£10)",
+                web_app=WebAppInfo(url="https://buy.stripe.com/eVa9AE7b23xK036eUW"),
+            ),
+        ],
+        [InlineKeyboardButton("I've Paid", callback_data="paid")],
+        [InlineKeyboardButton("Go Back", callback_data="go_back_subscription")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(text=text, reply_markup=reply_markup)
+
+
+async def crypto_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    text = (
+        "⚡ **Crypto Payment:**\n"
+        "Send your payment to the following address:\n\n"
+        "🔗 **Ethereum:** 0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82\n\n"
+        "💰 **Prices:**\n"
+        "• $8 Monthly\n"
+        "• $15 Lifetime\n\n"
+        "After payment, click 'I've Paid' and provide the transaction details. "
+        "Your VIP link will be sent within 30 minutes during BST hours."
+    )
+    keyboard = [
+        [InlineKeyboardButton("I've Paid", callback_data="paid"),
+         InlineKeyboardButton("Go Back", callback_data="go_back_subscription")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(text=text, reply_markup=reply_markup)
+
+
+async def paypal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    text = (
+        "➡️Send £6.75 for 1 MONTH or £10 for LIFETIME To\n"
+        "➡️Paypal: onlyvipfan@outlook.com\n"
+        "✅MUST BE FRIENDS AND FAMILY\n"
+        "✅IF YOU DON'T HAVE FAMILY AND FRIENDS USE CARD/CRYPTO\n"
+        "❌DONT LEAVE A NOTE\n"
+        "➡️CLICK I PAID\n"
+        "✅SEND PAYMENT SCREENSHOT TO @zakivip1 AND PROVIDE YOUR FULL PAYPAL NAME\n\n"
+        "Your VIP link will be sent within 30 minutes during BST hours."
+    )
+    keyboard = [
+        [InlineKeyboardButton("I've Paid", callback_data="paid"),
+         InlineKeyboardButton("Go Back", callback_data="go_back_subscription")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(text=text, reply_markup=reply_markup)
+
+
+async def paid_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    user = update.effective_user
+    subscription = context.user_data.get("subscription", "Unknown Plan")
+    admin_message = (
+        f"✅ Payment Notification!\n\n"
+        f"👤 User: @{user.username or 'No Username'} (ID: {user.id})\n"
+        f"📄 Subscription: {subscription}\n"
+    )
+
+    try:
+        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_message)
+    except Exception as e:
+        print(f"Error sending admin notification: {e}")
+
+    text = (
+        "✅ Thank you for your payment! Please send a screenshot of your transaction "
+        "or provide the transaction ID for verification to @zakivip1.\n\n"
+        "💬 Need help? Contact @zakivip1."
+    )
+    keyboard = [[InlineKeyboardButton("Support", callback_data="support")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(text=text, reply_markup=reply_markup)
+
+
+async def support_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    text = (
+        "💬 Support:\n"
+        "For any issues, contact @zakivip1.\n"
+        "Available from 8:00 AM to 12:00 AM BST."
+    )
+    keyboard = [[InlineKeyboardButton("Go Back", callback_data="go_back_main")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.callback_query.edit_message_text(text=text, reply_markup=reply_markup)
+
+
+async def go_back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "go_back_main":
+        await start(update, context)
+    elif query.data == "go_back_subscription":
+        await subscription_handler(update, context)
+
+
+def main() -> None:
+    app = Application.builder().token(TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(subscription_handler, pattern="^(1_month|lifetime)$"))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, fallback))
+    app.add_handler(CallbackQueryHandler(apple_google_pay_handler, pattern="^apple_google_pay$"))
+    app.add_handler(CallbackQueryHandler(crypto_handler, pattern="^crypto$"))
+    app.add_handler(CallbackQueryHandler(paypal_handler, pattern="^paypal$"))
+    app.add_handler(CallbackQueryHandler(paid_handler, pattern="^paid$"))
+    app.add_handler(CallbackQueryHandler(support_handler, pattern="^support$"))
+    app.add_handler(CallbackQueryHandler(go_back_handler, pattern="^go_back_(main|subscription)$"))
 
-    # Add error handler
-    app.add_error_handler(error_handler)
+    app.run_polling()
 
-    # Set webhook
-    app.bot.set_webhook(url=WEBHOOK_URL)
-
-    # Run Flask app for webhook handling
-    flask_app.run(host="0.0.0.0", port=8443)
 
 if __name__ == "__main__":
     main()
