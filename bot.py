@@ -1,6 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 import logging
+import asyncio
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -70,7 +71,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     elif query.data == "go_back":
         await start(update, context)
 
-if __name__ == "__main__":
+async def main() -> None:
     # Initialize the bot application
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -79,10 +80,14 @@ if __name__ == "__main__":
     app.add_handler(CallbackQueryHandler(button_handler))
 
     # Ensure webhook is set correctly
-    app.bot.delete_webhook()  # Clear existing webhook
+    await app.bot.delete_webhook()  # Clear existing webhook (added await)
     app.run_webhook(
         listen="0.0.0.0",
         port=8000,
         url_path=f"{BOT_TOKEN}",
         webhook_url=f"{WEBHOOK_URL}/{BOT_TOKEN}"
     )
+
+# Entry point for the script
+if __name__ == "__main__":
+    asyncio.run(main())
