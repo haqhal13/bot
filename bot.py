@@ -4,8 +4,8 @@ from fastapi import FastAPI, Request
 import logging
 
 # Constants
-BOT_TOKEN = "YOUR_BOT_TOKEN"
-WEBHOOK_URL = "YOUR_WEBHOOK_URL"
+BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
+WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Payment Information
 PAYMENT_INFO = {
