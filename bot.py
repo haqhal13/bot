@@ -1,4 +1,6 @@
 from telegram.ext import Application, CommandHandler
+from telegram import Update
+from telegram.ext import ContextTypes
 from fastapi import FastAPI, Request
 import logging
 
@@ -7,7 +9,7 @@ BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Logging Configuration
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("bot")
 
 # FastAPI App
@@ -17,14 +19,18 @@ app = FastAPI()
 telegram_app = None
 
 
-async def start(update, context):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Responds to the /start command with a welcome message.
     """
+    logger.debug(f"Received /start command from user {update.effective_user.id}.")
     user = update.effective_user
-    message = f"Hello, {user.first_name}! 👋 Welcome to the bot. How can I assist you today?"
+    if user:
+        message = f"Hello, {user.first_name}! 👋 Welcome to the bot. How can I assist you today?"
+    else:
+        message = "Hello! 👋 Welcome to the bot. How can I assist you today?"
     await update.message.reply_text(message)
-    logger.info(f"Sent welcome message to {user.first_name} ({user.id}).")
+    logger.info(f"Sent welcome message to {user.first_name if user else 'unknown user'}.")
 
 
 @app.on_event("startup")
@@ -107,9 +113,11 @@ async def webhook(request: Request):
         return {"status": "error", "message": "Application not initialized"}
 
     try:
-        update = await request.json()
-        logger.debug(f"Processing update: {update}")
-        await telegram_app.process_update(update)
+        update_json = await request.json()
+        logger.debug(f"Received update from webhook: {update_json}")
+        update = Update.de_json(update_json, telegram_app.bot)  # Parse the update JSON
+        await telegram_app.process_update(update)  # Process the update
+        logger.info("Update processed successfully.")
         return {"status": "ok"}
     except Exception as e:
         logger.exception(f"Error processing webhook: {e}")
