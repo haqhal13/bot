@@ -5,7 +5,7 @@ import logging
 import asyncio
 
 # Telegram bot token
-BOT_TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY"
+BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 
 # Initialize logging
 logging.basicConfig(
