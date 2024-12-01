@@ -3,18 +3,19 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppI
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 import os
 
-# Telegram Bot Token
-BOT_TOKEN = '123456789:EXAMPLETOKEN1234567890'  # Replace with your actual bot token
-WEBHOOK_URL = 'https://example-bot.onrender.com/webhook'  # Replace with your Render domain
+# Telegram Bot Token and Webhook URL
+BOT_TOKEN = "123456789:EXAMPLETOKEN1234567890"  # Replace with your bot token
+WEBHOOK_URL = "https://example-bot.onrender.com"  # Replace with your Render domain
 
 # Initialize FastAPI app
 app = FastAPI()
 
-# Telegram application
+# Initialize Telegram bot application
 telegram_app = Application.builder().token(BOT_TOKEN).build()
 
-# Start Command Handler
+# Define Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles the /start command."""
     intro_text = (
         "👋 Welcome to the VIP Payment Bot!\n\n"
         "💎 Choose your subscription plan below to proceed:\n\n"
@@ -29,9 +30,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(intro_text, reply_markup=reply_markup)
 
-# Payment Method Handlers
 async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles payment options."""
     query = update.callback_query
+    await query.answer()
 
     if query.data == "paypal":
         await query.edit_message_text(
@@ -86,16 +88,8 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             ])
         )
 
-    elif query.data == "i_paid":
-        await query.edit_message_text(
-            text="Thank you! Please send a screenshot of your payment or provide the transaction ID for verification.",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Go Back", callback_data="go_back")]
-            ])
-        )
-
-# Go Back Handler
 async def go_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles the Go Back action."""
     intro_text = (
         "👋 Welcome to the VIP Payment Bot!\n\n"
         "💎 Choose your subscription plan below to proceed:\n\n"
@@ -111,15 +105,10 @@ async def go_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.edit_message_text(intro_text, reply_markup=reply_markup)
 
-# Add handlers to Telegram application
+# Add Handlers to Telegram App
 telegram_app.add_handler(CommandHandler("start", start))
-telegram_app.add_handler(CallbackQueryHandler(payment_handler, pattern="^(paypal|apple_google_pay|crypto|i_paid)$"))
+telegram_app.add_handler(CallbackQueryHandler(payment_handler, pattern="^(paypal|apple_google_pay|crypto)$"))
 telegram_app.add_handler(CallbackQueryHandler(go_back, pattern="^go_back$"))
-
-# Root route for health checks
-@app.get("/")
-async def root():
-    return {"message": "Bot is running!"}
 
 # Webhook route
 @app.post("/webhook")
@@ -130,10 +119,21 @@ async def webhook(request: Request):
     await telegram_app.process_update(update)
     return {"status": "ok"}
 
-# Main entry point
+# Health Check
+@app.get("/ping")
+async def ping():
+    """Health check endpoint."""
+    return {"status": "ok"}
+
+# On application startup, set Telegram webhook
+@app.on_event("startup")
+async def startup_event():
+    """Set webhook on startup."""
+    await telegram_app.bot.set_webhook(f"{WEBHOOK_URL}/webhook")
+
 if __name__ == "__main__":
     import uvicorn
 
-    # Retrieve the port for Render deployment
+    # Get port for Render
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
