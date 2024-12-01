@@ -1,15 +1,6 @@
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application, CommandHandler
-import logging
-import os
-
-# Logging setup
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
-logger = logging.getLogger(__name__)
 
 # Telegram Bot Token
 BOT_TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY"
@@ -20,31 +11,35 @@ app = Flask(__name__)
 # Telegram Bot Application
 application = Application.builder().token(BOT_TOKEN).build()
 
-# Define the /start command handler
+# /start command handler
 async def start(update: Update, context):
-    logger.info(f"Received /start from {update.effective_user.username}")
-    await update.message.reply_text("Hello! Your bot is working perfectly.")
+    await update.message.reply_text("Hello! Your bot is working.")
 
-# Add the command handler to the bot
+# Add the /start handler
 application.add_handler(CommandHandler("start", start))
 
+# Webhook route
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():
-    """Handle incoming webhook requests from Telegram."""
     try:
+        # Parse the update from Telegram
         update = Update.de_json(request.get_json(force=True), application.bot)
-        logger.info(f"Webhook received update: {update.to_dict()}")
         application.update_queue.put_nowait(update)  # Queue the update for processing
+        app.logger.info("Received update: %s", update)
         return "OK", 200
     except Exception as e:
-        logger.error(f"Error handling webhook: {e}")
+        app.logger.error("Error processing update: %s", str(e))
         return "Internal Server Error", 500
 
-@app.route("/ping", methods=["GET"])
+# Status route for debugging
+@app.route("/status", methods=["GET"])
+def status():
+    return "Bot is live and responding!", 200
+
+# Ping route for UptimeRobot
+@app.route("/ping", methods=["HEAD", "GET"])
 def ping():
-    """Health check endpoint for uptime monitoring."""
     return "Pong!", 200
 
 if __name__ == "__main__":
-    # Flask app for local testing
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(host="0.0.0.0", port=5000)
