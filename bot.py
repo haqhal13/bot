@@ -4,7 +4,8 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 import os
 
 # Telegram Bot Token
-BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
+BOT_TOKEN = '123456789:EXAMPLETOKEN1234567890'  # Replace with your actual bot token
+WEBHOOK_URL = 'https://example-bot.onrender.com/webhook'  # Replace with your Render domain
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -114,6 +115,11 @@ async def go_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(CallbackQueryHandler(payment_handler, pattern="^(paypal|apple_google_pay|crypto|i_paid)$"))
 telegram_app.add_handler(CallbackQueryHandler(go_back, pattern="^go_back$"))
+
+# Root route for health checks
+@app.get("/")
+async def root():
+    return {"message": "Bot is running!"}
 
 # Webhook route
 @app.post("/webhook")
