@@ -21,6 +21,7 @@ telegram_app = Application.builder().token(BOT_TOKEN).build()
 
 # Define /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles the /start command."""
     try:
         await update.message.reply_text("Hello! I'm your bot. How can I assist you today?")
         logger.info(f"Handled /start command from user {update.effective_user.id}")
@@ -33,6 +34,7 @@ telegram_app.add_handler(CommandHandler("start", start))
 # Webhook route
 @app.post("/webhook")
 async def webhook(request: Request):
+    """Handles incoming webhook requests from Telegram."""
     try:
         update_data = await request.json()
         update = Update.de_json(update_data, telegram_app.bot)
@@ -46,10 +48,12 @@ async def webhook(request: Request):
 # Health check route
 @app.get("/")
 async def health_check():
+    """Simple health check endpoint."""
     return {"status": "Bot is running"}
 
 # Function to set the webhook automatically
 async def set_webhook():
+    """Sets the Telegram bot webhook."""
     async with AsyncClient() as client:
         try:
             # Delete any existing webhook
@@ -69,12 +73,10 @@ async def set_webhook():
 # Run the webhook setup during app startup
 @app.on_event("startup")
 async def startup_event():
+    """Runs on app startup."""
     await set_webhook()
 
 # Main entry point for local development
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
-    except Exception as e:
-        logger.error(f"Failed to start the FastAPI server: {e}")
-        traceback.print_exc()
