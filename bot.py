@@ -1,139 +1,94 @@
 from fastapi import FastAPI, Request
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-import os
+import logging
+import traceback
 
-# Telegram Bot Token and Webhook URL
-BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
-WEBHOOK_URL = 'https://bot-1-f2wh.onrender.com/webhook'
+# Telegram bot token
+BOT_TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY"
+
+# Initialize logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler()
+    ],
+)
+logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI()
 
-# Telegram application
-telegram_app = Application.builder().token(BOT_TOKEN).build()
+# Initialize Telegram bot application
+try:
+    telegram_app = Application.builder().token(BOT_TOKEN).build()
+    logger.info("Telegram bot application initialized successfully.")
+except Exception as e:
+    logger.error(f"Failed to initialize Telegram bot application: {e}")
+    raise
 
-# Start Command Handler
+# Define command handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    intro_text = (
-        "👋 Welcome to the VIP Payment Bot!\n\n"
-        "💎 Choose your subscription plan below to proceed:\n\n"
-        "1 Month: £6.75\n"
-        "Lifetime: £10"
-    )
-    keyboard = [
-        [InlineKeyboardButton("PayPal", callback_data="paypal")],
-        [InlineKeyboardButton("Apple Pay / Google Pay", callback_data="apple_google_pay")],
-        [InlineKeyboardButton("Crypto (No KYC)", callback_data="crypto")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(intro_text, reply_markup=reply_markup)
-
-# Payment Method Handlers
-async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-
-    if query.data == "paypal":
-        await query.edit_message_text(
-            text="Send payment to:\n\n"
-                 "💳 PayPal: onlyvipfan@outlook.com\n\n"
-                 "💎 Pricing:\n"
-                 "1 Month: £6.75\n"
-                 "Lifetime: £10\n\n"
-                 "✅ MUST BE FRIENDS AND FAMILY\n"
-                 "❌ DO NOT LEAVE A NOTE\n\n"
-                 "After payment, click 'I Paid' and provide your PayPal email.",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Go Back", callback_data="go_back")]
-            ])
-        )
-
-    elif query.data == "apple_google_pay":
+    """Handles the /start command."""
+    try:
         keyboard = [
-            [
-                InlineKeyboardButton(
-                    "1 Month (£6.75)",
-                    web_app=WebAppInfo(url="https://buy.stripe.com/8wM0041QI3xK3ficMP"),
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    "Lifetime (£10)",
-                    web_app=WebAppInfo(url="https://buy.stripe.com/aEUeUYaneecoeY03cc"),
-                )
-            ],
-            [InlineKeyboardButton("Go Back", callback_data="go_back")],
+            [InlineKeyboardButton("Option 1", callback_data="option1")],
+            [InlineKeyboardButton("Option 2", callback_data="option2")],
         ]
-        await query.edit_message_text(
-            text="💳 Pay using Apple Pay / Google Pay via the links below:\n\n"
-                 "💎 Pricing:\n"
-                 "1 Month: £6.75\n"
-                 "Lifetime: £10",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-        )
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text("Welcome! Choose an option:", reply_markup=reply_markup)
+        logger.info(f"/start command handled successfully for chat ID {update.message.chat_id}.")
+    except Exception as e:
+        logger.error(f"Error handling /start command: {e}")
+        traceback.print_exc()
 
-    elif query.data == "crypto":
-        await query.edit_message_text(
-            text="Send crypto to the following address:\n\n"
-                 "💰 Bitcoin: 1ExampleBTCAddress\n"
-                 "💰 Ethereum: 0xExampleETHAddress\n\n"
-                 "💎 Pricing:\n"
-                 "1 Month: $8\n"
-                 "Lifetime: $14\n\n"
-                 "After payment, click 'I Paid'.",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Go Back", callback_data="go_back")]
-            ])
-        )
+# Define callback query handler
+async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles button clicks in the bot."""
+    try:
+        query = update.callback_query
+        await query.answer()
+        await query.edit_message_text(f"You selected: {query.data}")
+        logger.info(f"Button callback handled successfully for data: {query.data}.")
+    except Exception as e:
+        logger.error(f"Error handling button callback: {e}")
+        traceback.print_exc()
 
-    elif query.data == "i_paid":
-        await query.edit_message_text(
-            text="Thank you! Please send a screenshot of your payment or provide the transaction ID for verification.",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Go Back", callback_data="go_back")]
-            ])
-        )
-
-# Go Back Handler
-async def go_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    intro_text = (
-        "👋 Welcome to the VIP Payment Bot!\n\n"
-        "💎 Choose your subscription plan below to proceed:\n\n"
-        "1 Month: £6.75\n"
-        "Lifetime: £10"
-    )
-    keyboard = [
-        [InlineKeyboardButton("PayPal", callback_data="paypal")],
-        [InlineKeyboardButton("Apple Pay / Google Pay", callback_data="apple_google_pay")],
-        [InlineKeyboardButton("Crypto (No KYC)", callback_data="crypto")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    query = update.callback_query
-    await query.edit_message_text(intro_text, reply_markup=reply_markup)
-
-# Add handlers to Telegram application
+# Add handlers to the bot application
 telegram_app.add_handler(CommandHandler("start", start))
-telegram_app.add_handler(CallbackQueryHandler(payment_handler, pattern="^(paypal|apple_google_pay|crypto|i_paid)$"))
-telegram_app.add_handler(CallbackQueryHandler(go_back, pattern="^go_back$"))
+telegram_app.add_handler(CallbackQueryHandler(button_callback))
 
-# Root route for health checks
-@app.get("/")
-async def root():
-    return {"message": "Bot is running!"}
-
-# Webhook route
+# Webhook route for Telegram updates
 @app.post("/webhook")
 async def webhook(request: Request):
-    """Handle Telegram webhook updates."""
-    update_data = await request.json()
-    update = Update.de_json(update_data, telegram_app.bot)
-    await telegram_app.process_update(update)
-    return {"status": "ok"}
+    """Handles Telegram webhook updates."""
+    try:
+        data = await request.json()
+        update = Update.de_json(data, telegram_app.bot)
+        logger.info(f"Received update: {data}")
+        await telegram_app.process_update(update)
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error handling webhook request: {e}")
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
+# Health check route
+@app.get("/")
+async def root():
+    """Basic health check endpoint."""
+    logger.info("Health check endpoint hit.")
+    return {"message": "Bot is running successfully!"}
 
 # Main entry point
 if __name__ == "__main__":
     import uvicorn
 
-    # Retrieve the port for Render deployment
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    logger.info("Starting bot...")
+    try:
+        # Start the FastAPI server
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+    except Exception as e:
+        logger.error(f"Failed to start the FastAPI server: {e}")
+        traceback.print_exc()
