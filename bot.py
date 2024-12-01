@@ -18,10 +18,13 @@ async def start(update: Update, context):
     try:
         chat_id = update.effective_chat.id
         print(f"Processing /start command for Chat ID: {chat_id}")
+        
         # Send debug message
         await context.bot.send_message(chat_id=chat_id, text="Debug: Your bot is processing the /start command!")
-        # Send reply to user
+        
+        # Send the actual response to the user
         await update.message.reply_text("Hello! Your bot is running!")
+        print(f"Replied to user {chat_id}")
     except Exception as e:
         print(f"Error in start handler: {e}")
 
