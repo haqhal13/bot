@@ -13,24 +13,26 @@ application = Application.builder().token(BOT_TOKEN).build()
 
 # Define a simple command handler for /start
 async def start(update: Update, context):
-    await update.message.reply_text("Hello! The bot is up and running.")
+    await update.message.reply_text("Hello! The bot is up and running. 🎉")
 
 # Add the /start command to the bot's application
 application.add_handler(CommandHandler("start", start))
 
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():
+    """Handles incoming updates from Telegram."""
     try:
         # Parse incoming updates from Telegram
         update = Update.de_json(request.get_json(force=True), Bot(BOT_TOKEN))
         # Process the update
         application.update_queue.put_nowait(update)
     except Exception as e:
-        print(f"Error handling update: {e}")
+        print(f"Error processing update: {e}")
     return "OK", 200
 
 @app.route("/ping", methods=["GET"])
 def ping():
+    """Health check endpoint."""
     return "Pong!", 200
 
 if __name__ == "__main__":
