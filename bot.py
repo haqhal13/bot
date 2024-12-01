@@ -1,10 +1,10 @@
-import threading
+from fastapi import FastAPI
+from fastapi.middleware.wsgi import WSGIMiddleware
+from flask import Flask
 from telegram.ext import Application, CommandHandler
 from telegram import Update
 from telegram.ext import ContextTypes
-from fastapi import FastAPI, Request
 import logging
-from flask import Flask
 
 # Constants
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
@@ -14,12 +14,27 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("bot")
 
+# Flask Uptime App
+flask_app = Flask(__name__)
+
+@flask_app.route("/ping", methods=["GET", "HEAD"])
+def uptime_ping():
+    """UptimeRobot Ping Endpoint"""
+    return "Bot is active at ping!", 200
+
 # FastAPI App
-app = FastAPI()
+fastapi_app = FastAPI()
+
+@fastapi_app.get("/")
+def root():
+    """Root endpoint for FastAPI"""
+    return {"status": "ok", "message": "FastAPI bot is running"}
+
+# Attach Flask to FastAPI using WSGIMiddleware
+fastapi_app.mount("/flask", WSGIMiddleware(flask_app))
 
 # Telegram Bot Application
 telegram_app = None
-
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -34,8 +49,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(message)
     logger.info(f"Sent welcome message to {user.first_name if user else 'unknown user'}.")
 
-
-@app.on_event("startup")
+@fastapi_app.on_event("startup")
 async def startup_event():
     """
     Initializes the Telegram bot and sets the webhook.
@@ -73,8 +87,7 @@ async def startup_event():
     else:
         logger.warning("Telegram bot application is already initialized.")
 
-
-@app.on_event("shutdown")
+@fastapi_app.on_event("shutdown")
 async def shutdown_event():
     """
     Stops the Telegram bot application cleanly on shutdown.
@@ -86,25 +99,8 @@ async def shutdown_event():
         await telegram_app.stop()
         logger.info("Telegram bot application stopped successfully.")
 
-
-@app.get("/")
-async def root():
-    """
-    Root endpoint to confirm the bot's status.
-    """
-    return {"status": "ok", "message": "Bot is running!"}
-
-
-@app.head("/")
-async def root_head():
-    """
-    HEAD request handler for health checks.
-    """
-    return {"status": "ok"}
-
-
-@app.post("/webhook")
-async def webhook(request: Request):
+@fastapi_app.post("/webhook")
+async def webhook(request):
     """
     Handles incoming Telegram updates via the webhook.
     """
@@ -125,29 +121,7 @@ async def webhook(request: Request):
         logger.exception(f"Error processing webhook: {e}")
         return {"status": "error", "message": str(e)}
 
-
-# Flask Uptime Ping App
-flask_app = Flask(__name__)
-
-@flask_app.route("/", methods=["GET"])
-def uptime_home():
-    """Root route to confirm the bot is live."""
-    return "Bot is active at root!", 200
-
-@flask_app.route("/ping", methods=["GET", "HEAD"])
-def uptime_ping():
-    """UptimeRobot Ping Endpoint"""
-    return "Bot is active at ping!", 200
-
-
-def run_flask():
-    """Runs the Flask app on a separate thread."""
-    flask_app.run(host="0.0.0.0", port=5000)
-
-
-# Start Flask and FastAPI Apps
+# Run FastAPI
 if __name__ == "__main__":
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(fastapi_app, host="0.0.0.0", port=8000)
