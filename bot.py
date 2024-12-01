@@ -174,14 +174,23 @@ async def startup_event():
 
 @app.post("/webhook")
 async def webhook(request: Request):
+    """
+    Handles incoming Telegram updates via the webhook.
+    """
     global telegram_app
-    update_json = await request.json()
-    update = Update.de_json(update_json, telegram_app.bot)
-    await telegram_app.process_update(update)
-    return {"status": "ok"}
 
+    if not telegram_app:
+        logger.error("Telegram application not initialized.")
+        return {"status": "error", "message": "Application not initialized"}
 
-@app.get("/")
-async def root():
-    return {"status": "ok"}
-        return {"status": "error", "message": str(e)}
+    try:
+        update_json = await request.json()
+        logger.debug(f"Received update from webhook: {update_json}")
+        update = Update.de_json(update_json, telegram_app.bot)  # Parse the update JSON
+        await telegram_app.process_update(update)  # Process the update
+        logger.info("Update processed successfully.")
+        return {"status": "ok"}
+
+    except Exception as e:
+        logger.exception(f"Error processing webhook: {e}")
+        return {"status": "error", "message": str(e)}  # Ensure this is at the correct indentation level
