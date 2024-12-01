@@ -2,6 +2,11 @@ import os
 from flask import Flask, request, jsonify
 from telegram import Update
 from telegram.ext import Application, CommandHandler
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("bot")
 
 # Initialize Flask App
 app = Flask(__name__)
@@ -15,13 +20,19 @@ application = Application.builder().token(BOT_TOKEN).build()
 # Command handler for "/start"
 async def start(update: Update, context):
     """Handler for the /start command."""
-    chat_id = update.effective_chat.id
-    print(f"Processing /start command for Chat ID: {chat_id}")
     try:
+        chat_id = update.effective_chat.id
+        logger.info(f"Processing /start command for Chat ID: {chat_id}")
+        
+        # Send debug message to the user
+        await context.bot.send_message(chat_id=chat_id, text="Debug: Your bot is processing the /start command!")
+        logger.info(f"Debug message sent to Chat ID: {chat_id}")
+        
+        # Send actual response
         await context.bot.send_message(chat_id=chat_id, text="Hello! Your bot is running!")
-        print(f"Message sent to Chat ID: {chat_id}")
+        logger.info(f"Message sent to Chat ID: {chat_id}")
     except Exception as e:
-        print(f"Error sending message to Chat ID {chat_id}: {e}")
+        logger.error(f"Error in start handler: {e}")
 
 # Add the command handler to the Telegram application
 application.add_handler(CommandHandler("start", start))
@@ -36,12 +47,12 @@ def webhook():
     """Webhook route to receive updates from Telegram."""
     try:
         data = request.get_json(force=True)
-        print("Received update:", data)  # Debug log for incoming updates
+        logger.info(f"Received update: {data}")  # Debug log for incoming updates
         update = Update.de_json(data, application.bot)
         application.update_queue.put_nowait(update)  # Queue the update for processing
         return "OK", 200
     except Exception as e:
-        print(f"Error processing webhook: {e}")
+        logger.error(f"Error processing webhook: {e}")
         return "Internal Server Error", 500
 
 @app.route("/ping", methods=["GET"])
