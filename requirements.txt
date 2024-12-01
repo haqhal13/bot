@@ -1,5 +1,6 @@
 fastapi
-python-telegram-bot==20.3
 uvicorn[standard]
+python-telegram-bot==20.3
 gunicorn
 requests
+flask
