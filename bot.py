@@ -122,3 +122,16 @@ async def webhook(request: Request):
     except Exception as e:
         logger.exception(f"Error processing webhook: {e}")
         return {"status": "error", "message": str(e)}
+
+# Add a global variable to track the last uptime check
+import datetime
+last_ping = None
+
+@app.get("/uptime")
+async def uptime_check():
+    """
+    Endpoint to respond to uptime monitoring pings.
+    """
+    global last_ping
+    last_ping = datetime.datetime.utcnow()
+    return {"status": "ok", "message": "Uptime check successful.", "last_ping": last_ping.isoformat() if last_ping else None}
