@@ -31,19 +31,90 @@ telegram_app = None
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Responds to the /start command with a welcome message.
+    Responds to the /start command with subscription options.
     """
-    logger.debug(f"Received /start command from user {update.effective_user.id}.")
-    user = update.effective_user
-    if user:
-        message = f"Hello, {user.first_name}! 👋 Welcome to the bot. How can I assist you today?"
-    else:
-        message = "Hello! 👋 Welcome to the bot. How can I assist you today?"
-    await update.message.reply_text(message)
-    logger.info(f"Sent welcome message to {user.first_name if user else 'unknown user'}.")
+    keyboard = [
+        [InlineKeyboardButton("PayPal", callback_data="paypal")],
+        [InlineKeyboardButton("Apple Pay / Google Pay", callback_data="stripe")],
+        [InlineKeyboardButton("Crypto (No KYC)", callback_data="crypto")],
+        [InlineKeyboardButton("Contact Support", url=f"https://t.me/{SUPPORT_CONTACT[1:]}")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(
+        "👋 Welcome to the VIP Payment Bot!\n\n💎 Choose your subscription plan below to proceed:",
+        reply_markup=reply_markup,
+    )
+    
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles user selection of payment methods.
+    """
+    query = update.callback_query
+    await query.answer()
 
+    if query.data == "paypal":
+        message = (
+            f"💳 *PayPal Instructions:*\n"
+            f"Send £6.75 for 1 Month or £10 for Lifetime to: `{PAYMENT_INFO['paypal_email']}`\n\n"
+            "✅ MUST BE FRIENDS AND FAMILY\n"
+            "❌ DO NOT LEAVE A NOTE\n"
+            "After payment, click 'I Paid' and send proof of payment."
+        )
+        keyboard = [
+            [InlineKeyboardButton("I Paid", callback_data="paid")],
+            [InlineKeyboardButton("Go Back", callback_data="back")],
+            [InlineKeyboardButton("Contact Support", url=f"https://t.me/{SUPPORT_CONTACT[1:]}")],
+        ]
+
+    elif query.data == "stripe":
+        message = (
+            "💳 *Stripe Payment:*\n\n"
+            f"1 Month: [Pay £6.75]({PAYMENT_INFO['1_month']['stripe_link']})\n"
+            f"Lifetime: [Pay £10]({PAYMENT_INFO['lifetime']['stripe_link']})\n\n"
+            "Click the appropriate link to pay securely."
+        )
+        keyboard = [
+            [InlineKeyboardButton("Go Back", callback_data="back")],
+            [InlineKeyboardButton("Contact Support", url=f"https://t.me/{SUPPORT_CONTACT[1:]}")],
+        ]
+
+    elif query.data == "crypto":
+        message = (
+            "💰 *Crypto Payment:*\n\n"
+            f"1 Month: {PAYMENT_INFO['1_month']['crypto']} USD\n"
+            f"Lifetime: {PAYMENT_INFO['lifetime']['crypto']} USD\n\n"
+            f"BTC Address: `{PAYMENT_INFO['crypto_addresses']['btc']}`\n"
+            f"ETH Address: `{PAYMENT_INFO['crypto_addresses']['eth']}`\n\n"
+            "After payment, click 'I Paid' and send proof of payment."
+        )
+        keyboard = [
+            [InlineKeyboardButton("I Paid", callback_data="paid")],
+            [InlineKeyboardButton("Go Back", callback_data="back")],
+            [InlineKeyboardButton("Contact Support", url=f"https://t.me/{SUPPORT_CONTACT[1:]}")],
+        ]
+
+    elif query.data == "paid":
+        message = (
+            "✅ Please send proof of payment (screenshot or transaction ID) to verify your subscription."
+        )
+        keyboard = [
+            [InlineKeyboardButton("Go Back", callback_data="back")],
+            [InlineKeyboardButton("Contact Support", url=f"https://t.me/{SUPPORT_CONTACT[1:]}")],
+        ]
+
+    elif query.data == "back":
+        await start(update.callback_query, context)
+        return
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(
+        text=message, reply_markup=reply_markup, parse_mode="Markdown"
+    )
+    
 @app.on_event("startup")
 async def startup_event():
     """
