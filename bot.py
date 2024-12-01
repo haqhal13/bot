@@ -37,16 +37,14 @@ def uptime_ping():
     return "Bot is active at ping!", 200
 
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
-async def telegram_webhook():
+def telegram_webhook():
     """Telegram Webhook Endpoint"""
     json_data = request.get_json()
     logger.info(f"Webhook received update: {json_data}")  # Log the raw JSON
-    try:
-        update = Update.de_json(json_data, application.bot)
-        # Await the coroutine to process the update
-        await application.process_update(update)
-    except Exception as e:
-        logger.error(f"Error processing update: {e}")  # Log any errors
+    update = Update.de_json(json_data, application.bot)
+
+    # Process the update asynchronously
+    asyncio.create_task(application.process_update(update))
     return "OK", 200
 
 if __name__ == "__main__":
