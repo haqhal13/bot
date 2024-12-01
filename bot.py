@@ -11,9 +11,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Bot Token and Webhook URL (important for hosting and UptimeRobot pings)
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY")  # Replace with your bot token
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://bot-1-f2wh.onrender.com")  # Replace with Render app URL
+# Bot Token and Webhook URL
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")  # Replace with your bot token
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://your-app-name.onrender.com")  # Replace with Render app URL
 
 # Flask app for webhook handling
 app = Flask(__name__)
@@ -131,10 +131,12 @@ def webhook():
 # UptimeRobot Ping Route
 @app.route("/")
 def uptime_ping():
+    """Route for UptimeRobot pings."""
     return "Bot is active!", 200
 
 # Set Webhook
 def set_webhook():
+    """Set webhook for Telegram bot."""
     webhook_url = f"{WEBHOOK_URL}/{TOKEN}"
     application.bot.set_webhook(url=webhook_url)
     logger.info(f"Webhook set to {webhook_url}")
