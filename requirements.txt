@@ -1,4 +1,5 @@
 fastapi
-python-telegram-bot==20.3  # Ensure compatibility with the script
-uvicorn[standard]          # For serving the FastAPI app
-gunicorn                   # For production deployment
+python-telegram-bot==20.3
+uvicorn[standard]
+gunicorn
+requests
