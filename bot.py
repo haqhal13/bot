@@ -15,18 +15,13 @@ application = Application.builder().token(BOT_TOKEN).build()
 # Command handler for "/start"
 async def start(update: Update, context):
     """Handler for the /start command."""
+    chat_id = update.effective_chat.id
+    print(f"Processing /start command for Chat ID: {chat_id}")
     try:
-        chat_id = update.effective_chat.id
-        print(f"Processing /start command for Chat ID: {chat_id}")
-        
-        # Send debug message
-        await context.bot.send_message(chat_id=chat_id, text="Debug: Your bot is processing the /start command!")
-        
-        # Send the actual response to the user
-        await update.message.reply_text("Hello! Your bot is running!")
-        print(f"Replied to user {chat_id}")
+        await context.bot.send_message(chat_id=chat_id, text="Hello! Your bot is running!")
+        print(f"Message sent to Chat ID: {chat_id}")
     except Exception as e:
-        print(f"Error in start handler: {e}")
+        print(f"Error sending message to Chat ID {chat_id}: {e}")
 
 # Add the command handler to the Telegram application
 application.add_handler(CommandHandler("start", start))
