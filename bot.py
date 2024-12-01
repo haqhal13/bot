@@ -159,17 +159,12 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
     )
 
 
-async def startup_event():
-    global telegram_app
-    if telegram_app is None:
-        telegram_app = Application.builder().token(BOT_TOKEN).build()
-        telegram_app.add_handler(CommandHandler("start", start))
-        telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection, pattern="select_.*"))
-        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method, pattern="paypal_.*|stripe_.*|crypto_.*|back|paid"))
-        await telegram_app.initialize()
-        await telegram_app.bot.delete_webhook()
-        await telegram_app.bot.set_webhook(WEBHOOK_URL)
-        await telegram_app.start()
+@app.get("/")
+async def root():
+    """
+    Root endpoint to confirm the bot's status.
+    """
+    return {"status": "ok", "message": "Bot is running!"}
 
 
 @app.post("/webhook")
@@ -193,4 +188,22 @@ async def webhook(request: Request):
 
     except Exception as e:
         logger.exception(f"Error processing webhook: {e}")
-        return {"status": "error", "message": str(e)}  # Ensure this is at the correct indentation level
+        return {"status": "error", "message": str(e)}
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Initializes the Telegram bot and sets the webhook.
+    """
+    global telegram_app
+    if telegram_app is None:
+        logger.info("Initializing Telegram bot application...")
+        telegram_app = Application.builder().token(BOT_TOKEN).build()
+        telegram_app.add_handler(CommandHandler("start", start))
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection, pattern="select_.*"))
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method, pattern="paypal_.*|stripe_.*|crypto_.*|back|paid"))
+        await telegram_app.initialize()
+        await telegram_app.bot.delete_webhook()
+        await telegram_app.bot.set_webhook(WEBHOOK_URL)
+        await telegram_app.start()
