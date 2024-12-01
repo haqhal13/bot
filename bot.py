@@ -106,57 +106,7 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
-    # PayPal
-    elif query.data.startswith("paypal_"):
-        subscription = "1 Month (£6.75)" if "1_month" in query.data else "Lifetime (£10)"
-        price = PAYMENT_INFO["1_month"]["price"] if "1_month" in query.data else PAYMENT_INFO["lifetime"]["price"]
-        message = (
-            f"📧 *PayPal Instructions:*\n\n"
-            f"Send {price} to `{PAYMENT_INFO['paypal_email']}`\n"
-            "✅ Must be sent as *Friends and Family* (No notes).\n\n"
-            "Delivery: *30 mins via email*\n\n"
-            "Make sure to screenshot the confirmation and send it to @ZAKIVIP1 for verification."
-        )
-        keyboard = [
-            [InlineKeyboardButton("I Paid", callback_data=f"paid_{query.data}")],
-            [InlineKeyboardButton("Go Back", callback_data="back")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
-    # Crypto (ETH/BTC)
-    elif query.data.startswith("crypto_"):
-        subscription = "1 Month ($8)" if "1_month" in query.data else "Lifetime ($14)"
-        price = PAYMENT_INFO["1_month"]["crypto"] if "1_month" in query.data else PAYMENT_INFO["lifetime"]["crypto"]
-        message = (
-            f"💰 *Crypto Payment:*\n\n"
-            f"{subscription}:\n\n"
-            f"BTC Address: `{PAYMENT_INFO['crypto_addresses']['btc']}`\n"
-            f"ETH Address: `{PAYMENT_INFO['crypto_addresses']['eth']}`\n\n"
-            "Delivery: *30 mins via email*\n\n"
-            "Make sure to screenshot the confirmation and send it to @ZAKIVIP1 for verification."
-        )
-        keyboard = [
-            [InlineKeyboardButton("I Paid", callback_data=f"paid_{query.data}")],
-            [InlineKeyboardButton("Go Back", callback_data="back")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
-    # Handle "I Paid" for all methods
-    elif query.data.startswith("paid_"):
-        subscription = (
-            "1 Month" if "1_month" in query.data else "Lifetime"
-        )  # Determine the subscription type
-        user = query.from_user
-        await notify_admin(context, user, subscription)
-        await query.edit_message_text(
-            text=(
-                "✅ Payment confirmation sent. Our team will verify and process your subscription shortly!\n\n"
-                "If you haven't already, send a screenshot and payment details to @ZAKIVIP1 for faster verification."
-            ),
-            parse_mode="Markdown",
-        )
+    # Other handlers...
 
     elif query.data == "back":
         await start(update.callback_query, context)
@@ -175,10 +125,30 @@ async def startup_event():
 
         # Add command handlers
         telegram_app.add_handler(CommandHandler("start", start))
-        telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection))  # Added handler
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection))
 
         # Initialize the bot
         await telegram_app.initialize()
 
         # Delete previous webhook
-        logger.info("Deleting previous webhook
+        logger.info("Deleting previous webhook (if any)...")  # Fixed string literal issue
+        deleted = await telegram_app.bot.delete_webhook()
+        if deleted:
+            logger.info("Previous webhook deleted successfully.")
+        else:
+            logger.warning("No previous webhook found or failed to delete.")
+
+        # Set new webhook
+        logger.info(f"Setting new webhook to {WEBHOOK_URL}...")
+        webhook_set = await telegram_app.bot.set_webhook(WEBHOOK_URL)
+        if not webhook_set:
+            logger.error("Failed to set webhook. Exiting startup.")
+            raise RuntimeError("Webhook setup failed!")
+
+        # Start the bot
+        await telegram_app.start()
+        logger.info("Telegram bot application started successfully.")
+    else:
+        logger.warning("Telegram bot application is already initialized.")
+
+# Other event handlers and API routes...
