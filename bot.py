@@ -1,19 +1,24 @@
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
-import os
+import logging
+
+# Logging configuration
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Telegram Bot Token
-TOKEN = os.getenv('7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY', '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY')  # Replace with your bot token
+BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
 
 # Flask app setup
 app = Flask(__name__)
 
 # Telegram bot application
-application = Application.builder().token(TOKEN).build()
+application = Application.builder().token(BOT_TOKEN).build()
 
 # Telegram Command Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.info(f"Received /start command from user: {update.effective_user.id}")
     await update.message.reply_text("Welcome! The bot is working!")
 
 # Add Command Handlers
@@ -29,15 +34,18 @@ def uptime_ping():
     """UptimeRobot Ping Endpoint"""
     return "Bot is active at ping!", 200
 
-@app.route(f"/{TOKEN}", methods=["POST"])
+@app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def telegram_webhook():
     """Telegram Webhook Endpoint"""
     json_data = request.get_json()
     update = Update.de_json(json_data, application.bot)
+    logger.info(f"Received update: {json_data}")
     application.process_update(update)
     return "OK", 200
 
 if __name__ == "__main__":
     # Set Webhook
-    application.bot.set_webhook(url=f"https://your-app-name.onrender.com/{TOKEN}")
+    webhook_url = f"https://bot-1-f2wh.onrender.com/{BOT_TOKEN}"
+    application.bot.set_webhook(url=webhook_url)
+    logger.info(f"Webhook set to {webhook_url}")
     app.run(host="0.0.0.0", port=5000)
