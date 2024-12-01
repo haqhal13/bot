@@ -10,6 +10,16 @@ BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Logging Configuration
+# Payment Information
+PAYMENT_INFO = {
+    "1_month": {"price": "£6.75", "crypto": "$8", "stripe_link": "https://stripe-link-for-1-month"},
+    "lifetime": {"price": "£10", "crypto": "$14", "stripe_link": "https://stripe-link-for-lifetime"},
+    "paypal_email": "onlyfanvip@outlook.com",
+    "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
+}
+
+# Contact Support
+SUPPORT_CONTACT = "@ZakiVip1"
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("bot")
 
