@@ -5,10 +5,7 @@ import os
 import logging
 
 # Logging configuration
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Bot Token and Webhook URL
@@ -37,7 +34,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(intro_text, reply_markup=reply_markup)
 
-# Payment Method Handlers
+# Payment Handlers
 async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
 
@@ -50,36 +47,32 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                  "Lifetime: £10\n\n"
                  "✅ MUST BE FRIENDS AND FAMILY\n"
                  "❌ DO NOT LEAVE A NOTE\n\n"
-                 "After payment, click 'I Paid' and provide your PayPal email.",
+                 "After payment, click 'I Paid'.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("Go Back", callback_data="go_back")]
             ])
         )
-
     elif query.data == "apple_google_pay":
         keyboard = [
             [
                 InlineKeyboardButton(
-                    "1 Month (£6.75)",
-                    web_app=WebAppInfo(url="https://buy.stripe.com/8wM0041QI3xK3ficMP"),
+                    "1 Month (£6.75)", web_app=WebAppInfo(url="https://buy.stripe.com/8wM0041QI3xK3ficMP")
                 )
             ],
             [
                 InlineKeyboardButton(
-                    "Lifetime (£10)",
-                    web_app=WebAppInfo(url="https://buy.stripe.com/aEUeUYaneecoeY03cc"),
+                    "Lifetime (£10)", web_app=WebAppInfo(url="https://buy.stripe.com/aEUeUYaneecoeY03cc")
                 )
             ],
             [InlineKeyboardButton("Go Back", callback_data="go_back")],
         ]
         await query.edit_message_text(
-            text="💳 Pay using Apple Pay / Google Pay via the links below:\n\n"
+            text="💳 Pay using Apple Pay / Google Pay:\n\n"
                  "💎 Pricing:\n"
                  "1 Month: £6.75\n"
                  "Lifetime: £10",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
-
     elif query.data == "crypto":
         await query.edit_message_text(
             text="Send crypto to the following address:\n\n"
@@ -87,16 +80,7 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                  "💰 Ethereum: 0xExampleETHAddress\n\n"
                  "💎 Pricing:\n"
                  "1 Month: $8\n"
-                 "Lifetime: $14\n\n"
-                 "After payment, click 'I Paid'.",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Go Back", callback_data="go_back")]
-            ])
-        )
-
-    elif query.data == "i_paid":
-        await query.edit_message_text(
-            text="Thank you! Please send a screenshot of your payment or provide the transaction ID for verification.",
+                 "Lifetime: $14",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("Go Back", callback_data="go_back")]
             ])
@@ -104,39 +88,23 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 # Go Back Handler
 async def go_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    intro_text = (
-        "👋 Welcome to the VIP Payment Bot!\n\n"
-        "💎 Choose your subscription plan below to proceed:\n\n"
-        "1 Month: £6.75\n"
-        "Lifetime: £10"
-    )
-    keyboard = [
-        [InlineKeyboardButton("PayPal", callback_data="paypal")],
-        [InlineKeyboardButton("Apple Pay / Google Pay", callback_data="apple_google_pay")],
-        [InlineKeyboardButton("Crypto (No KYC)", callback_data="crypto")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    query = update.callback_query
-    await query.edit_message_text(intro_text, reply_markup=reply_markup)
+    await start(update, context)
 
-# Webhook Route for Flask
+# Webhook Route
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
-    """Handle incoming webhook requests from Telegram."""
     json_data = request.get_json()
     update = Update.de_json(json_data, application.bot)
     application.process_update(update)
     return "OK", 200
 
-# UptimeRobot Ping Route
-@app.route("/")
+# UptimeRobot Route
+@app.route("/", methods=["GET"])
 def uptime_ping():
-    """Route for UptimeRobot pings."""
     return "Bot is active!", 200
 
 # Set Webhook
 def set_webhook():
-    """Set webhook for Telegram bot."""
     webhook_url = f"{WEBHOOK_URL}/{TOKEN}"
     application.bot.set_webhook(url=webhook_url)
     logger.info(f"Webhook set to {webhook_url}")
