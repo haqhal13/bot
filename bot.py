@@ -11,7 +11,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Telegram Bot Token (replace with your bot token)
+# Telegram Bot Token
 BOT_TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY"
 
 # Flask App
@@ -22,7 +22,7 @@ application = Application.builder().token(BOT_TOKEN).build()
 
 # Define the /start command handler
 async def start(update: Update, context):
-    """Handle the /start command."""
+    logger.info(f"Received /start from {update.effective_user.username}")
     await update.message.reply_text("Hello! Your bot is working perfectly.")
 
 # Add the command handler to the bot
@@ -33,6 +33,7 @@ def webhook():
     """Handle incoming webhook requests from Telegram."""
     try:
         update = Update.de_json(request.get_json(force=True), application.bot)
+        logger.info(f"Webhook received update: {update.to_dict()}")
         application.update_queue.put_nowait(update)  # Queue the update for processing
         return "OK", 200
     except Exception as e:
