@@ -1,18 +1,14 @@
-from fastapi import FastAPI, Request
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 import logging
-import asyncio
+from fastapi import FastAPI, Request
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ContextTypes
 
-# Telegram bot token
-BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
-
-# Initialize logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Telegram Bot Token
+BOT_TOKEN = '7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc'
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -20,65 +16,37 @@ app = FastAPI()
 # Telegram bot application
 telegram_app = Application.builder().token(BOT_TOKEN).build()
 
-# Proper initialization of the application
-async def initialize_telegram_app():
-    await telegram_app.initialize()
-    logger.info("Telegram application initialized.")
-
-# Add handlers
+# Define /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handles the /start command."""
-    keyboard = [
-        [InlineKeyboardButton("Option 1", callback_data="option1")],
-        [InlineKeyboardButton("Option 2", callback_data="option2")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Welcome! Choose an option:", reply_markup=reply_markup)
+    try:
+        await update.message.reply_text("Hello! I'm your bot. How can I assist you today?")
+        logger.info(f"Handled /start command from user {update.effective_user.id}")
+    except Exception as e:
+        logger.error(f"Error in /start command: {e}")
 
-async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handles button clicks in the bot."""
-    query = update.callback_query
-    await query.answer()
-    await query.edit_message_text(f"You selected: {query.data}")
-
+# Add /start command handler to Telegram app
 telegram_app.add_handler(CommandHandler("start", start))
-telegram_app.add_handler(CallbackQueryHandler(button_callback))
 
 # Webhook route
 @app.post("/webhook")
 async def webhook(request: Request):
-    """Handles Telegram webhook updates."""
     try:
-        data = await request.json()
-        update = Update.de_json(data, telegram_app.bot)
-        logger.info(f"Received update: {data}")
+        update_data = await request.json()
+        update = Update.de_json(update_data, telegram_app.bot)
         await telegram_app.process_update(update)
-        return {"status": "success"}
+        logger.info(f"Received update: {update_data}")
+        return {"status": "ok"}
     except Exception as e:
-        logger.error(f"Error handling webhook request: {e}")
+        logger.error(f"Error in webhook: {e}")
         return {"status": "error", "message": str(e)}
 
 # Health check route
 @app.get("/")
-async def root():
-    """Health check endpoint."""
-    return {"message": "Bot is running!"}
+async def health_check():
+    return {"status": "Bot is running"}
 
-# Main entry point
 if __name__ == "__main__":
     import uvicorn
-    import threading
-
-    async def start_app():
-        await initialize_telegram_app()
-        # Set the webhook for Telegram
-        await telegram_app.bot.set_webhook(url="https://bot-1-f2wh.onrender.com/webhook")
-        logger.info("Webhook set successfully.")
-
-    # Initialize the Telegram application in a separate thread to ensure FastAPI starts independently
-    threading.Thread(target=lambda: asyncio.run(start_app())).start()
-
-    # Start FastAPI server
     uvicorn.run(app, host="0.0.0.0", port=8000)
     except Exception as e:
         logger.error(f"Failed to start the FastAPI server: {e}")
