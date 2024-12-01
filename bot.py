@@ -1,124 +1,150 @@
-from telegram.ext import Application, CommandHandler
-from telegram import Update
-from telegram.ext import ContextTypes
-from fastapi import FastAPI, Request
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    WebAppInfo,
+)
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+)
 import logging
 
-# Constants
+# Logging configuration
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Telegram bot token
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
-# Logging Configuration
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger("bot")
 
-# FastAPI App
-app = FastAPI()
-
-# Telegram Bot Application
-telegram_app = None
-
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Responds to the /start command with a welcome message.
-    """
-    logger.debug(f"Received /start command from user {update.effective_user.id}.")
-    user = update.effective_user
-    if user:
-        message = f"Hello, {user.first_name}! 👋 Welcome to the bot. How can I assist you today?"
-    else:
-        message = "Hello! 👋 Welcome to the bot. How can I assist you today?"
-    await update.message.reply_text(message)
-    logger.info(f"Sent welcome message to {user.first_name if user else 'unknown user'}.")
+# Start Command Handler
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    intro_text = (
+        "👋 Welcome to the VIP Payment Bot!\n\n"
+        "💎 Choose your subscription plan below to proceed:\n\n"
+        "1 Month: £6.75\n"
+        "Lifetime: £10"
+    )
+    keyboard = [
+        [InlineKeyboardButton("PayPal", callback_data="paypal")],
+        [InlineKeyboardButton("Apple Pay / Google Pay", callback_data="apple_google_pay")],
+        [InlineKeyboardButton("Crypto (No KYC)", callback_data="crypto")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(intro_text, reply_markup=reply_markup)
 
 
-@app.on_event("startup")
-async def startup_event():
-    """
-    Initializes the Telegram bot and sets the webhook.
-    """
-    global telegram_app
+# Payment Method Handlers
+async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
 
-    if telegram_app is None:
-        logger.info("Initializing Telegram bot application...")
-        telegram_app = Application.builder().token(BOT_TOKEN).build()
+    if query.data == "paypal":
+        await query.edit_message_text(
+            text="Send payment to:\n\n"
+                 "💳 PayPal: onlyvipfan@outlook.com\n\n"
+                 "💎 Pricing:\n"
+                 "1 Month: £6.75\n"
+                 "Lifetime: £10\n\n"
+                 "✅ MUST BE FRIENDS AND FAMILY\n"
+                 "❌ DO NOT LEAVE A NOTE\n\n"
+                 "After payment, click 'I Paid' and provide your PayPal email.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Go Back", callback_data="go_back")]
+            ])
+        )
 
-        # Add command handlers
-        telegram_app.add_handler(CommandHandler("start", start))
+    elif query.data == "apple_google_pay":
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "1 Month (£6.75)",
+                    web_app=WebAppInfo(url="https://buy.stripe.com/8wM0041QI3xK3ficMP"),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "Lifetime (£10)",
+                    web_app=WebAppInfo(url="https://buy.stripe.com/aEUeUYaneecoeY03cc"),
+                )
+            ],
+            [InlineKeyboardButton("Go Back", callback_data="go_back")],
+        ]
+        await query.edit_message_text(
+            text="💳 Pay using Apple Pay / Google Pay via the links below:\n\n"
+                 "💎 Pricing:\n"
+                 "1 Month: £6.75\n"
+                 "Lifetime: £10",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+        )
 
-        # Initialize the bot
-        await telegram_app.initialize()
+    elif query.data == "crypto":
+        await query.edit_message_text(
+            text="Send crypto to the following address:\n\n"
+                 "💰 Bitcoin: 1ExampleBTCAddress\n"
+                 "💰 Ethereum: 0xExampleETHAddress\n\n"
+                 "💎 Pricing:\n"
+                 "1 Month: $8\n"
+                 "Lifetime: $14\n\n"
+                 "After payment, click 'I Paid'.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Go Back", callback_data="go_back")]
+            ])
+        )
 
-        # Delete previous webhook
-        logger.info("Deleting previous webhook (if any)...")
-        deleted = await telegram_app.bot.delete_webhook()
-        if deleted:
-            logger.info("Previous webhook deleted successfully.")
-        else:
-            logger.warning("No previous webhook found or failed to delete.")
-
-        # Set new webhook
-        logger.info(f"Setting new webhook to {WEBHOOK_URL}...")
-        webhook_set = await telegram_app.bot.set_webhook(WEBHOOK_URL)
-        if not webhook_set:
-            logger.error("Failed to set webhook. Exiting startup.")
-            raise RuntimeError("Webhook setup failed!")
-
-        # Start the bot
-        await telegram_app.start()
-        logger.info("Telegram bot application started successfully.")
-    else:
-        logger.warning("Telegram bot application is already initialized.")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """
-    Stops the Telegram bot application cleanly on shutdown.
-    """
-    global telegram_app
-
-    if telegram_app:
-        logger.info("Stopping Telegram bot application...")
-        await telegram_app.stop()
-        logger.info("Telegram bot application stopped successfully.")
-
-
-@app.get("/")
-async def root():
-    """
-    Root endpoint to confirm the bot's status.
-    """
-    return {"status": "ok", "message": "Bot is running!"}
-
-
-@app.head("/")
-async def root_head():
-    """
-    HEAD request handler for health checks.
-    """
-    return {"status": "ok"}
+    elif query.data == "i_paid":
+        await query.edit_message_text(
+            text="Thank you! Please send a screenshot of your payment or provide the transaction ID for verification.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Go Back", callback_data="go_back")]
+            ])
+        )
 
 
-@app.post("/webhook")
-async def webhook(request: Request):
-    """
-    Handles incoming Telegram updates via the webhook.
-    """
-    global telegram_app
+# Go Back Handler
+async def go_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    intro_text = (
+        "👋 Welcome to the VIP Payment Bot!\n\n"
+        "💎 Choose your subscription plan below to proceed:\n\n"
+        "1 Month: £6.75\n"
+        "Lifetime: £10"
+    )
+    keyboard = [
+        [InlineKeyboardButton("PayPal", callback_data="paypal")],
+        [InlineKeyboardButton("Apple Pay / Google Pay", callback_data="apple_google_pay")],
+        [InlineKeyboardButton("Crypto (No KYC)", callback_data="crypto")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    query = update.callback_query
+    await query.edit_message_text(intro_text, reply_markup=reply_markup)
 
-    if not telegram_app:
-        logger.error("Telegram application not initialized.")
-        return {"status": "error", "message": "Application not initialized"}
 
-    try:
-        update_json = await request.json()
-        logger.debug(f"Received update from webhook: {update_json}")
-        update = Update.de_json(update_json, telegram_app.bot)  # Parse the update JSON
-        await telegram_app.process_update(update)  # Process the update
-        logger.info("Update processed successfully.")
-        return {"status": "ok"}
+# Main Function
+def main():
+    # Initialize the application
+    application = Application.builder().token(BOT_TOKEN).build()
+
+    # Add handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(payment_handler, pattern="^(paypal|apple_google_pay|crypto|i_paid)$"))
+    application.add_handler(CallbackQueryHandler(go_back, pattern="^go_back$"))
+
+    # Set the webhook
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=8443,
+        webhook_url=WEBHOOK_URL
+    )
+
+
+if __name__ == "__main__":
+    main()
     except Exception as e:
         logger.exception(f"Error processing webhook: {e}")
         return {"status": "error", "message": str(e)}
