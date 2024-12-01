@@ -1,56 +1,46 @@
 from flask import Flask, request
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler
 import logging
-import asyncio
-
-# Logging configuration
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("bot")
 
 # Telegram Bot Token
-BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
+TOKEN = "7739378344:AAHePCaShSC60pN1VwX9AY4TqD"
 
-# Flask app setup
+# Flask App
 app = Flask(__name__)
 
-# Telegram bot application
-application = Application.builder().token(BOT_TOKEN).build()
+# Telegram Bot Application
+application = Application.builder().token(TOKEN).build()
 
-# Telegram Command Handlers
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handler for the /start command."""
-    logger.info(f"Processing /start command from user: {update.effective_user.id}")
-    await update.message.reply_text("Welcome! The bot is working!")
+# Set up logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
-# Add Command Handlers
+# Command Handlers
+async def start(update: Update, context):
+    await update.message.reply_text("Hello! I'm your bot. How can I assist you?")
+
+# Add handlers to the bot
 application.add_handler(CommandHandler("start", start))
 
-@app.route("/", methods=["GET"])
-def uptime_home():
-    """Root route to confirm the bot is live."""
-    return "Bot is active at root!", 200
+@app.route(f"/{TOKEN}", methods=["POST"])
+def webhook():
+    """Handle webhook updates from Telegram."""
+    try:
+        update = Update.de_json(request.get_json(force=True), application.bot)
+        application.update_queue.put_nowait(update)  # Properly queues the update for processing
+        return "OK", 200
+    except Exception as e:
+        logger.error(f"Error handling update: {e}")
+        return "Internal Server Error", 500
 
-@app.route("/ping", methods=["GET", "HEAD"])
-def uptime_ping():
-    """UptimeRobot Ping Endpoint"""
-    return "Bot is active at ping!", 200
-
-@app.route(f"/{BOT_TOKEN}", methods=["POST"])
-def telegram_webhook():
-    """Telegram Webhook Endpoint"""
-    json_data = request.get_json()
-    logger.info(f"Webhook received update: {json_data}")  # Log the raw JSON
-    update = Update.de_json(json_data, application.bot)
-
-    # Process the update asynchronously
-    asyncio.create_task(application.process_update(update))
-    return "OK", 200
+@app.route('/ping', methods=["GET", "HEAD"])
+def ping():
+    """Health check endpoint."""
+    return "PONG", 200
 
 if __name__ == "__main__":
-    # Set Webhook
-    webhook_url = f"https://bot-1-f2wh.onrender.com/{BOT_TOKEN}"
-    asyncio.run(application.bot.set_webhook(url=webhook_url))
-    logger.info(f"Webhook set to {webhook_url}")
-    # Run the Flask app
     app.run(host="0.0.0.0", port=5000)
