@@ -1,5 +1,5 @@
-from telegram.ext import Application, CommandHandler
-from telegram import Update
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from fastapi import FastAPI, Request
 import logging
@@ -12,8 +12,8 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 # Logging Configuration
 # Payment Information
 PAYMENT_INFO = {
-    "1_month": {"price": "£6.75", "crypto": "$8", "stripe_link": "https://stripe-link-for-1-month"},
-    "lifetime": {"price": "£10", "crypto": "$14", "stripe_link": "https://stripe-link-for-lifetime"},
+    "1_month": {"price": "£6.75", "crypto": "$8", "stripe_link": "https://buy.stripe.com/bIYbIMane1pCeY0eUZ"},
+    "lifetime": {"price": "£10", "crypto": "$14", "stripe_link": "https://buy.stripe.com/aEUeUYaneecoeY03cc"},
     "paypal_email": "onlyfanvip@outlook.com",
     "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
 }
@@ -31,7 +31,6 @@ telegram_app = None
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Responds to the /start command with subscription options.
     """
@@ -46,8 +45,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "👋 Welcome to the VIP Payment Bot!\n\n💎 Choose your subscription plan below to proceed:",
         reply_markup=reply_markup,
     )
-    
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
 
 async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -114,7 +112,8 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
     await query.edit_message_text(
         text=message, reply_markup=reply_markup, parse_mode="Markdown"
     )
-    
+
+
 @app.on_event("startup")
 async def startup_event():
     """
@@ -128,6 +127,7 @@ async def startup_event():
 
         # Add command handlers
         telegram_app.add_handler(CommandHandler("start", start))
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection))  # Added handler
 
         # Initialize the bot
         await telegram_app.initialize()
@@ -205,7 +205,6 @@ async def webhook(request: Request):
         logger.exception(f"Error processing webhook: {e}")
         return {"status": "error", "message": str(e)}
 
-# Add a global variable to track the last uptime check
 # Add a global variable to track the last uptime check
 import datetime
 
