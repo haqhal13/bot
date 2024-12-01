@@ -6,7 +6,7 @@ import os
 
 # Constants
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")  # Replace with your bot token
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://your-app-name.onrender.com")  # Replace with your Render app URL
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://your-app-name.onrender.com")  # Replace with your Render app's URL
 
 # Flask App Setup
 app = Flask(__name__)
@@ -14,10 +14,10 @@ app = Flask(__name__)
 # Telegram Application Setup
 application = Application.builder().token(BOT_TOKEN).build()
 
-# Logging
+# Logging for debugging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
+    level=logging.DEBUG,  # Set to DEBUG for detailed logs
 )
 logger = logging.getLogger(__name__)
 
@@ -119,6 +119,12 @@ async def go_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.edit_message_text(intro_text, reply_markup=reply_markup)
 
+# Debug Command Handler
+async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("Pong!")
+
+application.add_handler(CommandHandler("ping", ping))
+
 # Webhook Route
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():
@@ -133,4 +139,4 @@ if __name__ == "__main__":
     application.bot.set_webhook(f"{WEBHOOK_URL}/{BOT_TOKEN}")
 
     # Start Flask server
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
