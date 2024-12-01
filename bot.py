@@ -5,7 +5,7 @@ import logging
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("bot")
 
 # Telegram Bot Token
 BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
@@ -18,7 +18,8 @@ application = Application.builder().token(BOT_TOKEN).build()
 
 # Telegram Command Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    logger.info(f"Received /start command from user: {update.effective_user.id}")
+    """Handler for the /start command."""
+    logger.info(f"Processing /start command from user: {update.effective_user.id}")
     await update.message.reply_text("Welcome! The bot is working!")
 
 # Add Command Handlers
@@ -38,9 +39,12 @@ def uptime_ping():
 def telegram_webhook():
     """Telegram Webhook Endpoint"""
     json_data = request.get_json()
-    update = Update.de_json(json_data, application.bot)
-    logger.info(f"Received update: {json_data}")
-    application.process_update(update)
+    logger.info(f"Webhook received update: {json_data}")  # Log the raw JSON
+    try:
+        update = Update.de_json(json_data, application.bot)
+        application.process_update(update)  # Process the update
+    except Exception as e:
+        logger.error(f"Error processing update: {e}")  # Log any errors
     return "OK", 200
 
 if __name__ == "__main__":
