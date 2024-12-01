@@ -8,16 +8,17 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Bot Token and Webhook URL
-TOKEN = os.getenv("7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY", "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY")  # Replace with your bot token
-WEBHOOK_URL = os.getenv("https://bot-1-f2wh.onrender.com", "https://your-app-name.onrender.com")  # Replace with Render app URL
+# Environment variables for deployment
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")  # Replace with your bot token
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://your-app-name.onrender.com")  # Replace with Render app URL
 
-# Flask app for webhook handling
+# Flask app setup
 app = Flask(__name__)
 
-# Initialize Telegram Bot Application
+# Telegram bot application
 application = Application.builder().token(TOKEN).build()
 
+# --- Core Telegram Bot Logic ---
 # Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     intro_text = (
@@ -34,7 +35,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(intro_text, reply_markup=reply_markup)
 
-# Payment Handlers
+# Payment Method Handlers
 async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
 
@@ -47,7 +48,7 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                  "Lifetime: £10\n\n"
                  "✅ MUST BE FRIENDS AND FAMILY\n"
                  "❌ DO NOT LEAVE A NOTE\n\n"
-                 "After payment, click 'I Paid'.",
+                 "After payment, click 'I Paid' and provide your PayPal email.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("Go Back", callback_data="go_back")]
             ])
@@ -67,7 +68,7 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             [InlineKeyboardButton("Go Back", callback_data="go_back")],
         ]
         await query.edit_message_text(
-            text="💳 Pay using Apple Pay / Google Pay:\n\n"
+            text="💳 Pay using Apple Pay / Google Pay via the links below:\n\n"
                  "💎 Pricing:\n"
                  "1 Month: £6.75\n"
                  "Lifetime: £10",
@@ -80,7 +81,8 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                  "💰 Ethereum: 0xExampleETHAddress\n\n"
                  "💎 Pricing:\n"
                  "1 Month: $8\n"
-                 "Lifetime: $14",
+                 "Lifetime: $14\n\n"
+                 "After payment, click 'I Paid'.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("Go Back", callback_data="go_back")]
             ])
@@ -90,26 +92,28 @@ async def payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def go_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await start(update, context)
 
-# Webhook Route
+# --- Flask Routes ---
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
+    """Telegram Webhook Endpoint"""
     json_data = request.get_json()
     update = Update.de_json(json_data, application.bot)
     application.process_update(update)
     return "OK", 200
 
-# UptimeRobot Route
 @app.route("/", methods=["GET"])
 def uptime_ping():
+    """UptimeRobot Ping Endpoint"""
     return "Bot is active!", 200
 
-# Set Webhook
+# --- Webhook Setup ---
 def set_webhook():
+    """Set Telegram Webhook"""
     webhook_url = f"{WEBHOOK_URL}/{TOKEN}"
     application.bot.set_webhook(url=webhook_url)
     logger.info(f"Webhook set to {webhook_url}")
 
-# Main Function
+# --- Main Entry Point ---
 if __name__ == "__main__":
     set_webhook()
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
