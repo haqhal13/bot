@@ -35,8 +35,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Responds to the /start command with subscription options.
     """
     keyboard = [
-        [InlineKeyboardButton("1 MONTH", callback_data="1_month")],
-        [InlineKeyboardButton("LIFETIME", callback_data="lifetime")],
+        [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="1_month")],
+        [InlineKeyboardButton("LIFETIME (£10)", callback_data="lifetime")],
         [InlineKeyboardButton("Support", callback_data="support")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -59,9 +59,14 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
 
     if query.data == "1_month":
         message = (
-            "💳 *1 Month Subscription - £6.75:*\n\n"
-            f"[Pay with Stripe]({PAYMENT_INFO['1_month']['stripe_link']})\n\n"
-            "After payment, click 'I Paid' and send proof of payment or transaction ID to verify."
+            "💳 *1 Month Subscription (£6.75):*\n\n"
+            "Choose your preferred payment method below:\n\n"
+            f"🔗 [Stripe Link]({PAYMENT_INFO['1_month']['stripe_link']})\n"
+            f"📧 *PayPal:* Send £6.75 to `{PAYMENT_INFO['paypal_email']}`\n"
+            "✅ Must be sent as *Friends and Family* (No notes).\n\n"
+            f"💰 *Crypto (BTC/ETH):*\n"
+            f"BTC: `{PAYMENT_INFO['crypto_addresses']['btc']}`\n"
+            f"ETH: `{PAYMENT_INFO['crypto_addresses']['eth']}`\n"
         )
         keyboard = [
             [InlineKeyboardButton("I Paid", callback_data="paid")],
@@ -71,9 +76,14 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
 
     elif query.data == "lifetime":
         message = (
-            "💳 *Lifetime Subscription - £10:*\n\n"
-            f"[Pay with Stripe]({PAYMENT_INFO['lifetime']['stripe_link']})\n\n"
-            "After payment, click 'I Paid' and send proof of payment or transaction ID to verify."
+            "💳 *Lifetime Subscription (£10):*\n\n"
+            "Choose your preferred payment method below:\n\n"
+            f"🔗 [Stripe Link]({PAYMENT_INFO['lifetime']['stripe_link']})\n"
+            f"📧 *PayPal:* Send £10 to `{PAYMENT_INFO['paypal_email']}`\n"
+            "✅ Must be sent as *Friends and Family* (No notes).\n\n"
+            f"💰 *Crypto (BTC/ETH):*\n"
+            f"BTC: `{PAYMENT_INFO['crypto_addresses']['btc']}`\n"
+            f"ETH: `{PAYMENT_INFO['crypto_addresses']['eth']}`\n"
         )
         keyboard = [
             [InlineKeyboardButton("I Paid", callback_data="paid")],
