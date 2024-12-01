@@ -9,8 +9,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Bot Token and Webhook URL
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")  # Replace with your bot token
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://your-app-name.onrender.com")  # Replace with Render app URL
+TOKEN = os.getenv("7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY", "7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY")  # Replace with your bot token
+WEBHOOK_URL = os.getenv("https://bot-1-f2wh.onrender.com", "https://your-app-name.onrender.com")  # Replace with Render app URL
 
 # Flask app for webhook handling
 app = Flask(__name__)
