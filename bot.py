@@ -1,19 +1,16 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
+from fastapi import FastAPI, Request
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-from fastapi import FastAPI
 import os
 
-# Bot Token
-TOKEN = os.getenv('BOT_TOKEN')  # Use an environment variable for security
+# Telegram Bot Token
+BOT_TOKEN = '7739378344:AAHePCaShSC60pN1VwX9AY4TqD-xZMxQ1gY'
 
-# Webhook URL (Replace YOUR_DOMAIN with your Render domain)
-WEBHOOK_URL = f"https://YOUR_RENDER_DOMAIN/webhook"
-
-# FastAPI application
+# Initialize FastAPI app
 app = FastAPI()
 
 # Telegram application
-application = Application.builder().token(TOKEN).build()
+telegram_app = Application.builder().token(BOT_TOKEN).build()
 
 # Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -113,21 +110,24 @@ async def go_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.edit_message_text(intro_text, reply_markup=reply_markup)
 
-# Add handlers
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CallbackQueryHandler(payment_handler, pattern="^(paypal|apple_google_pay|crypto|i_paid)$"))
-application.add_handler(CallbackQueryHandler(go_back, pattern="^go_back$"))
+# Add handlers to Telegram application
+telegram_app.add_handler(CommandHandler("start", start))
+telegram_app.add_handler(CallbackQueryHandler(payment_handler, pattern="^(paypal|apple_google_pay|crypto|i_paid)$"))
+telegram_app.add_handler(CallbackQueryHandler(go_back, pattern="^go_back$"))
 
+# Webhook route
 @app.post("/webhook")
-async def webhook(update: dict):
-    """Handle incoming Telegram updates."""
-    await application.process_update(Update.de_json(update, application.bot))
+async def webhook(request: Request):
+    """Handle Telegram webhook updates."""
+    update_data = await request.json()
+    update = Update.de_json(update_data, telegram_app.bot)
+    await telegram_app.process_update(update)
+    return {"status": "ok"}
 
-# Main Function
+# Main entry point
 if __name__ == "__main__":
-    # Set webhook
-    import asyncio
-    asyncio.run(application.bot.set_webhook(url=WEBHOOK_URL))
+    import uvicorn
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    # Retrieve the port for Render deployment
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
