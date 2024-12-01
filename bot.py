@@ -1,57 +1,67 @@
-from telegram.ext import Application, ApplicationBuilder
+from telegram.ext import Application, CommandHandler
 from fastapi import FastAPI, Request
 import logging
 
-# Bot Token and Webhook URL
+# Constants
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
+# Logging Configuration
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("bot")
 
-# Create FastAPI instance
+# FastAPI App
 app = FastAPI()
 
-# Global variable for the Telegram application
+# Telegram Bot Application
 telegram_app = None
+
+
+async def start(update, context):
+    """
+    Responds to the /start command with a welcome message.
+    """
+    user = update.effective_user
+    message = f"Hello, {user.first_name}! 👋 Welcome to the bot. How can I assist you today?"
+    await update.message.reply_text(message)
+    logger.info(f"Sent welcome message to {user.first_name} ({user.id}).")
 
 
 @app.on_event("startup")
 async def startup_event():
     """
-    FastAPI startup event: Initialize the Telegram bot application,
-    set webhook, and manage its lifecycle.
+    Initializes the Telegram bot and sets the webhook.
     """
     global telegram_app
 
     if telegram_app is None:
-        logger.debug("Initializing Telegram bot application...")
+        logger.info("Initializing Telegram bot application...")
         telegram_app = Application.builder().token(BOT_TOKEN).build()
+
+        # Add command handlers
+        telegram_app.add_handler(CommandHandler("start", start))
 
         # Initialize the bot
         await telegram_app.initialize()
 
-        # Delete any previous webhook
-        logger.debug("Deleting any previous webhook...")
-        webhook_deleted = await telegram_app.bot.delete_webhook()
-        if webhook_deleted:
+        # Delete previous webhook
+        logger.info("Deleting previous webhook (if any)...")
+        deleted = await telegram_app.bot.delete_webhook()
+        if deleted:
             logger.info("Previous webhook deleted successfully.")
         else:
             logger.warning("No previous webhook found or failed to delete.")
 
-        # Set the new webhook
-        logger.debug(f"Setting new webhook: {WEBHOOK_URL}")
+        # Set new webhook
+        logger.info(f"Setting new webhook to {WEBHOOK_URL}...")
         webhook_set = await telegram_app.bot.set_webhook(WEBHOOK_URL)
-        if webhook_set:
-            logger.info(f"Webhook set successfully at {WEBHOOK_URL}")
-        else:
-            logger.error("Failed to set webhook.")
-            raise RuntimeError("Failed to set webhook.")
+        if not webhook_set:
+            logger.error("Failed to set webhook. Exiting startup.")
+            raise RuntimeError("Webhook setup failed!")
 
-        # Start the Telegram application
+        # Start the bot
         await telegram_app.start()
-        logger.info("Telegram application started successfully.")
+        logger.info("Telegram bot application started successfully.")
     else:
         logger.warning("Telegram bot application is already initialized.")
 
@@ -59,7 +69,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """
-    FastAPI shutdown event: Stop the Telegram bot application cleanly.
+    Stops the Telegram bot application cleanly on shutdown.
     """
     global telegram_app
 
@@ -72,7 +82,7 @@ async def shutdown_event():
 @app.get("/")
 async def root():
     """
-    Root route to confirm the bot's status.
+    Root endpoint to confirm the bot's status.
     """
     return {"status": "ok", "message": "Bot is running!"}
 
@@ -80,7 +90,7 @@ async def root():
 @app.head("/")
 async def root_head():
     """
-    Handle HEAD requests for the root route.
+    HEAD request handler for health checks.
     """
     return {"status": "ok"}
 
@@ -88,17 +98,17 @@ async def root_head():
 @app.post("/webhook")
 async def webhook(request: Request):
     """
-    Webhook route to process incoming Telegram updates.
+    Handles incoming Telegram updates via the webhook.
     """
     global telegram_app
 
     if not telegram_app:
-        logger.error("Telegram Application is not initialized.")
+        logger.error("Telegram application not initialized.")
         return {"status": "error", "message": "Application not initialized"}
 
     try:
         update = await request.json()
-        logger.debug(f"Received update: {update}")
+        logger.debug(f"Processing update: {update}")
         await telegram_app.process_update(update)
         return {"status": "ok"}
     except Exception as e:
