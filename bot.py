@@ -126,13 +126,12 @@ async def webhook(request: Request):
 
 # Add a global variable to track the last uptime check
 import datetime
-last_ping = None
-
-@app.get("/uptime")
+@app.api_route("/uptime", methods=["GET", "HEAD"])
 async def uptime_check():
     """
     Endpoint to respond to uptime monitoring pings.
     """
     global last_ping
-    last_ping = datetime.datetime.utcnow()
-    return {"status": "ok", "message": "Uptime check successful.", "last_ping": last_ping.isoformat() if last_ping else None}
+    if last_ping is None:
+        last_ping = datetime.datetime.utcnow()
+    return {"status": "ok", "message": "Uptime check successful.", "last_ping": last_ping.isoformat()}
