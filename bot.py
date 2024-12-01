@@ -8,18 +8,19 @@ import datetime
 # Constants
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
-ADMIN_TELEGRAM_HANDLE = "@telehaq"
 
+# Logging Configuration
 # Payment Information
 PAYMENT_INFO = {
-    "1_month": {"price": "£6.75", "crypto": "$8"},
-    "lifetime": {"price": "£10", "crypto": "$14"},
+    "1_month": {"price": "£6.75", "crypto": "$8", "stripe_link": "https://buy.stripe.com/bIYbIMane1pCeY0eUZ"},
+    "lifetime": {"price": "£10", "crypto": "$14", "stripe_link": "https://buy.stripe.com/aEUeUYaneecoeY03cc"},
     "paypal_email": "onlyfanvip@outlook.com",
     "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
 }
 
 # Contact Support
 SUPPORT_CONTACT = "@ZakiVip1"
+ADMIN_CONTACT = "@telehaq"
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("bot")
 
@@ -28,20 +29,6 @@ app = FastAPI()
 
 # Telegram Bot Application
 telegram_app = None
-
-
-async def notify_admin(context, user, subscription):
-    """
-    Notifies the admin when a user pays for a subscription.
-    """
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    message = (
-        f"💰 *New Payment Received!*\n\n"
-        f"📅 *Time Paid:* {now}\n"
-        f"👤 *User:* @{user.username if user.username else 'Unknown'}\n"
-        f"💎 *Subscription:* {subscription}\n"
-    )
-    await context.bot.send_message(chat_id=ADMIN_TELEGRAM_HANDLE, text=message, parse_mode="Markdown")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -71,45 +58,81 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
     query = update.callback_query
     await query.answer()
 
-    # Payment method selection
-    if query.data in ["1_month", "lifetime"]:
-        subscription = "1 Month (£6.75)" if query.data == "1_month" else "Lifetime (£10)"
+    if query.data == "1_month":
         message = (
-            f"💰 *{subscription} Subscription*\n\n"
-            "Choose your preferred payment method below:\n\n"
-            "📱 *Apple Pay / Google Pay (Instant Delivery)*\n"
-            "💳 *PayPal (30 mins delivery)*\n"
-            "💰 *Crypto (ETH/BTC) (30 mins delivery)*\n"
+            "💳 *1 Month Subscription (£6.75):*\n\n"
+            "Choose your preferred payment method below:\n"
+            "⏱ *Delivery:* Apple Pay/Google Pay instant, PayPal and Crypto: ~30 mins\n\n"
+            "💰£6.75 - 1 month\n\n"
+            f"🔗 [Apple Pay / Google Pay](miniapp://stripe-1-month)\n"
+            f"📧 *PayPal:* Send £6.75 to `{PAYMENT_INFO['paypal_email']}` (Friends & Family, No Notes)\n"
+            f"💰 *Crypto (BTC/ETH):*\nBTC: `{PAYMENT_INFO['crypto_addresses']['btc']}`\nETH: `{PAYMENT_INFO['crypto_addresses']['eth']}`\n\n"
+            "✅ *Update I Paid Description:*\n"
+            "Make sure to screenshot once you've paid. Provide @ZakiVip1 with a screenshot + name paid under."
         )
         keyboard = [
-            [InlineKeyboardButton("Apple Pay / Google Pay", callback_data=f"stripe_{query.data}")],
-            [InlineKeyboardButton("PayPal", callback_data=f"paypal_{query.data}")],
-            [InlineKeyboardButton("Crypto", callback_data=f"crypto_{query.data}")],
+            [InlineKeyboardButton("I Paid", callback_data="paid")],
             [InlineKeyboardButton("Go Back", callback_data="back")],
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
-    # Stripe (Apple Pay / Google Pay)
-    elif query.data.startswith("stripe_"):
-        subscription = "1 Month (£6.75)" if "1_month" in query.data else "Lifetime (£10)"
+    elif query.data == "lifetime":
         message = (
-            f"💳 *Apple Pay / Google Pay:*\n\n"
-            f"To pay for your {subscription}, click the button below:\n\n"
-            "Delivery: *Instant via email*\n\n"
-            "Make sure to screenshot the confirmation and send it to @ZAKIVIP1 for verification."
+            "💳 *Lifetime Subscription (£10):*\n\n"
+            "Choose your preferred payment method below:\n"
+            "⏱ *Delivery:* Apple Pay/Google Pay instant, PayPal and Crypto: ~30 mins\n\n"
+            "💰£10 - Lifetime\n\n"
+            f"🔗 [Apple Pay / Google Pay](miniapp://stripe-lifetime)\n"
+            f"📧 *PayPal:* Send £10 to `{PAYMENT_INFO['paypal_email']}` (Friends & Family, No Notes)\n"
+            f"💰 *Crypto (BTC/ETH):*\nBTC: `{PAYMENT_INFO['crypto_addresses']['btc']}`\nETH: `{PAYMENT_INFO['crypto_addresses']['eth']}`\n\n"
+            "✅ *Update I Paid Description:*\n"
+            "Make sure to screenshot once you've paid. Provide @ZakiVip1 with a screenshot + name paid under."
         )
         keyboard = [
-            [InlineKeyboardButton("Pay Now", url="https://buy.stripe.com")],  # Replace with your Stripe mini-app link
+            [InlineKeyboardButton("I Paid", callback_data="paid")],
             [InlineKeyboardButton("Go Back", callback_data="back")],
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
-    # Other handlers...
+    elif query.data == "support":
+        message = (
+            "💬 *Contact Customer Support:*\n\n"
+            "If you're having issues with payment, have questions, or haven’t received your VIP link yet, "
+            "we're here to help!\n\n"
+            "⏰ We operate between 7 AM and 12 AM BST to ensure prompt assistance.\n\n"
+            f"Reach out to us at {SUPPORT_CONTACT}."
+        )
+        keyboard = [
+            [InlineKeyboardButton("Go Back", callback_data="back")],
+        ]
+
+    elif query.data == "paid":
+        message = (
+            "✅ Please send proof of payment (screenshot or transaction ID) to verify your subscription. "
+            "We will process your verification as soon as possible!"
+        )
+        # Notify admin
+        user = query.from_user
+        await context.bot.send_message(
+            chat_id=ADMIN_CONTACT,
+            text=(
+                f"💸 Payment Alert!\n\n"
+                f"👤 *User:* @{user.username}\n"
+                f"🕒 *Time:* {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} BST\n"
+                f"🔔 *Subscription:* {query.data}"
+            ),
+        )
+        keyboard = [
+            [InlineKeyboardButton("Go Back", callback_data="back")],
+            [InlineKeyboardButton("Contact Support", url=f"https://t.me/{SUPPORT_CONTACT[1:]}")],
+        ]
 
     elif query.data == "back":
         await start(update.callback_query, context)
+        return
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(
+        text=message, reply_markup=reply_markup, parse_mode="Markdown"
+    )
 
 
 @app.on_event("startup")
@@ -125,13 +148,13 @@ async def startup_event():
 
         # Add command handlers
         telegram_app.add_handler(CommandHandler("start", start))
-        telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection))
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection))  # Added handler
 
         # Initialize the bot
         await telegram_app.initialize()
 
         # Delete previous webhook
-        logger.info("Deleting previous webhook (if any)...")  # Fixed string literal issue
+        logger.info("Deleting previous webhook (if any)...")
         deleted = await telegram_app.bot.delete_webhook()
         if deleted:
             logger.info("Previous webhook deleted successfully.")
@@ -151,4 +174,54 @@ async def startup_event():
     else:
         logger.warning("Telegram bot application is already initialized.")
 
-# Other event handlers and API routes...
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    Stops the Telegram bot application cleanly on shutdown.
+    """
+    global telegram_app
+
+    if telegram_app:
+        logger.info("Stopping Telegram bot application...")
+        await telegram_app.stop()
+        logger.info("Telegram bot application stopped successfully.")
+
+
+@app.get("/")
+async def root():
+    """
+    Root endpoint to confirm the bot's status.
+    """
+    return {"status": "ok", "message": "Bot is running!"}
+
+
+@app.head("/")
+async def root_head():
+    """
+    HEAD request handler for health checks.
+    """
+    return {"status": "ok"}
+
+
+@app.post("/webhook")
+async def webhook(request: Request):
+    """
+    Handles incoming Telegram updates via the webhook.
+    """
+    global telegram_app
+
+    if not telegram_app:
+        logger.error("Telegram application not initialized.")
+        return {"status": "error", "message": "Application not initialized"}
+
+    try:
+        update_json = await request.json()
+        logger.debug(f"Received update from webhook: {update_json}")
+        update = Update.de_json(update_json, telegram_app.bot)  # Parse the update JSON
+        await telegram_app.process_update(update)  # Process the update
+        logger.info("Update processed successfully.")
+        return {"status": "ok"}
+    except Exception as e:
+        logger.exception(f"Error processing webhook: {e}")
+        return {"status": "error", "message": str
