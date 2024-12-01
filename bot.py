@@ -19,6 +19,11 @@ async def start(update: Update, context):
 # Add the command handler to the Telegram application
 application.add_handler(CommandHandler("start", start))
 
+@app.route("/", methods=["GET"])
+def index():
+    """Base route for debugging."""
+    return "Bot is live!", 200
+
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():
     """Webhook route to receive updates from Telegram."""
