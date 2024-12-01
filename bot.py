@@ -35,14 +35,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Responds to the /start command with subscription options.
     """
     keyboard = [
-        [InlineKeyboardButton("PayPal", callback_data="paypal")],
-        [InlineKeyboardButton("Apple Pay / Google Pay", callback_data="stripe")],
-        [InlineKeyboardButton("Crypto (No KYC)", callback_data="crypto")],
-        [InlineKeyboardButton("Contact Support", url=f"https://t.me/{SUPPORT_CONTACT[1:]}")],
+        [InlineKeyboardButton("1 MONTH", callback_data="1_month")],
+        [InlineKeyboardButton("LIFETIME", callback_data="lifetime")],
+        [InlineKeyboardButton("Support", callback_data="support")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        "👋 Welcome to the VIP Payment Bot!\n\n💎 Choose your subscription plan below to proceed:",
+        "👋 Welcome to the VIP Bot!\n\n"
+        "💎 Get access to 1000’s of creators every month!\n\n"
+        "⚡️ INSTANT ACCESS TO VIP LINK SENT TO EMAIL!\n\n"
+        "⭐️ If we don’t have the model you're looking for, we’ll add them within 24–72 hours!\n\n"
+        "Select your subscription plan below or contact support for assistance if you have questions about anything! 🔍 👀",
         reply_markup=reply_markup,
     )
 
@@ -54,13 +57,11 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
     query = update.callback_query
     await query.answer()
 
-    if query.data == "paypal":
+    if query.data == "1_month":
         message = (
-            f"💳 *PayPal Instructions:*\n"
-            f"Send £6.75 for 1 Month or £10 for Lifetime to: `{PAYMENT_INFO['paypal_email']}`\n\n"
-            "✅ MUST BE FRIENDS AND FAMILY\n"
-            "❌ DO NOT LEAVE A NOTE\n"
-            "After payment, click 'I Paid' and send proof of payment."
+            "💳 *1 Month Subscription - £6.75:*\n\n"
+            f"[Pay with Stripe]({PAYMENT_INFO['1_month']['stripe_link']})\n\n"
+            "After payment, click 'I Paid' and send proof of payment or transaction ID to verify."
         )
         keyboard = [
             [InlineKeyboardButton("I Paid", callback_data="paid")],
@@ -68,36 +69,34 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
             [InlineKeyboardButton("Contact Support", url=f"https://t.me/{SUPPORT_CONTACT[1:]}")],
         ]
 
-    elif query.data == "stripe":
+    elif query.data == "lifetime":
         message = (
-            "💳 *Stripe Payment:*\n\n"
-            f"1 Month: [Pay £6.75]({PAYMENT_INFO['1_month']['stripe_link']})\n"
-            f"Lifetime: [Pay £10]({PAYMENT_INFO['lifetime']['stripe_link']})\n\n"
-            "Click the appropriate link to pay securely."
-        )
-        keyboard = [
-            [InlineKeyboardButton("Go Back", callback_data="back")],
-            [InlineKeyboardButton("Contact Support", url=f"https://t.me/{SUPPORT_CONTACT[1:]}")],
-        ]
-
-    elif query.data == "crypto":
-        message = (
-            "💰 *Crypto Payment:*\n\n"
-            f"1 Month: {PAYMENT_INFO['1_month']['crypto']} USD\n"
-            f"Lifetime: {PAYMENT_INFO['lifetime']['crypto']} USD\n\n"
-            f"BTC Address: `{PAYMENT_INFO['crypto_addresses']['btc']}`\n"
-            f"ETH Address: `{PAYMENT_INFO['crypto_addresses']['eth']}`\n\n"
-            "After payment, click 'I Paid' and send proof of payment."
+            "💳 *Lifetime Subscription - £10:*\n\n"
+            f"[Pay with Stripe]({PAYMENT_INFO['lifetime']['stripe_link']})\n\n"
+            "After payment, click 'I Paid' and send proof of payment or transaction ID to verify."
         )
         keyboard = [
             [InlineKeyboardButton("I Paid", callback_data="paid")],
             [InlineKeyboardButton("Go Back", callback_data="back")],
             [InlineKeyboardButton("Contact Support", url=f"https://t.me/{SUPPORT_CONTACT[1:]}")],
+        ]
+
+    elif query.data == "support":
+        message = (
+            "💬 *Contact Customer Support:*\n\n"
+            "If you're having issues with payment, have questions, or haven’t received your VIP link yet, "
+            "we're here to help!\n\n"
+            "We operate between 7 AM and 12 AM BST to ensure prompt assistance.\n\n"
+            f"Reach out to us at {SUPPORT_CONTACT}."
+        )
+        keyboard = [
+            [InlineKeyboardButton("Go Back", callback_data="back")],
         ]
 
     elif query.data == "paid":
         message = (
-            "✅ Please send proof of payment (screenshot or transaction ID) to verify your subscription."
+            "✅ Please send proof of payment (screenshot or transaction ID) to verify your subscription. "
+            "We will process your verification as soon as possible!"
         )
         keyboard = [
             [InlineKeyboardButton("Go Back", callback_data="back")],
