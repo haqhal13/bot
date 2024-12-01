@@ -10,8 +10,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Telegram Bot Token and Webhook URL
-BOT_TOKEN = '7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc'
-WEBHOOK_URL = f'https://bot-1-f2wh.onrender.com/webhook'
+BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
+WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Initialize FastAPI app
 app = FastAPI()
