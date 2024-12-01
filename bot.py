@@ -26,6 +26,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Global Application instance
+application = Application.builder().token(BOT_TOKEN).build()
+
 
 # Start command handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -128,27 +131,17 @@ async def go_back(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await query.edit_message_text(intro_text, reply_markup=reply_markup)
 
 
-# Main function
-def main() -> None:
-    application = Application.builder().token(BOT_TOKEN).build()
-
-    # Add handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(
-        CallbackQueryHandler(payment_handler, pattern="^(paypal|apple_google_pay|crypto|i_paid)$")
-    )
-    application.add_handler(CallbackQueryHandler(go_back, pattern="^go_back$"))
-
-    # Run the bot using webhook
-    try:
-        application.run_webhook(
-            listen="0.0.0.0",
-            port=int(os.environ.get("PORT", 8443)),
-            webhook_url=WEBHOOK_URL,
-        )
-    except Exception as e:
-        logger.error(f"Failed to start webhook: {e}")
+# Initialize handlers
+application.add_handler(CommandHandler("start", start))
+application.add_handler(
+    CallbackQueryHandler(payment_handler, pattern="^(paypal|apple_google_pay|crypto|i_paid)$")
+)
+application.add_handler(CallbackQueryHandler(go_back, pattern="^go_back$"))
 
 
-if __name__ == "__main__":
-    main()
+# Main entry point for Gunicorn
+app = application.run_webhook(
+    listen="0.0.0.0",
+    port=int(os.environ.get("PORT", 8443)),
+    webhook_url=WEBHOOK_URL,
+)
