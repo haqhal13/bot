@@ -9,6 +9,7 @@ from telegram.ext import Application, ApplicationBuilder
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
+# Create a FastAPI app
 app = FastAPI()
 
 # Set up logging
@@ -16,16 +17,19 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("bot")
 
 # Telegram bot application instance
-telegram_app = None  # Global application
+telegram_app = None
 
 
 @app.on_event("startup")
 async def startup_event():
-    global telegram_app  # Declare global bot application
+    global telegram_app
     try:
         logger.debug("Initializing Telegram bot application...")
         # Build and initialize the bot application
         telegram_app = Application.builder().token(BOT_TOKEN).build()
+
+        # Explicitly initialize the Application (important!)
+        await telegram_app.initialize()
 
         # Delete any existing webhook
         logger.debug("Deleting any previous webhook...")
@@ -40,6 +44,9 @@ async def startup_event():
         else:
             logger.error("Failed to set webhook.")
             sys.exit(1)  # Stop deployment if webhook setup fails
+
+        # Start the Telegram application
+        await telegram_app.start()
     except Exception as e:
         logger.error(f"Error during bot startup: {e}")
         sys.exit(1)  # Exit if bot initialization fails
@@ -49,8 +56,9 @@ async def startup_event():
 async def shutdown_event():
     global telegram_app
     if telegram_app:
-        await telegram_app.shutdown()
-        logger.info("Bot application shut down.")
+        # Stop the Telegram application
+        await telegram_app.stop()
+        logger.info("Bot application stopped.")
 
 
 @app.get("/")
