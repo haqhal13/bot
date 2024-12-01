@@ -54,4 +54,4 @@ if __name__ == "__main__":
     webhook_url = f"https://bot-1-f2wh.onrender.com/{BOT_TOKEN}"
     asyncio.run(application.bot.set_webhook(url=webhook_url))
     logger.info(f"Webhook set to {webhook_url}")
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000
