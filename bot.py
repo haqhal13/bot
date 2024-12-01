@@ -1,9 +1,7 @@
-from fastapi import FastAPI
-from fastapi.middleware.wsgi import WSGIMiddleware
-from flask import Flask
 from telegram.ext import Application, CommandHandler
 from telegram import Update
 from telegram.ext import ContextTypes
+from fastapi import FastAPI, Request
 import logging
 
 # Constants
@@ -14,27 +12,12 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("bot")
 
-# Flask Uptime App
-flask_app = Flask(__name__)
-
-@flask_app.route("/ping", methods=["GET", "HEAD"])
-def uptime_ping():
-    """UptimeRobot Ping Endpoint"""
-    return "Bot is active at ping!", 200
-
 # FastAPI App
-app = FastAPI()  # Named `app` to match Gunicorn's expectations
-
-@app.get("/")
-def root():
-    """Root endpoint for FastAPI"""
-    return {"status": "ok", "message": "FastAPI bot is running"}
-
-# Attach Flask to FastAPI using WSGIMiddleware
-app.mount("/flask", WSGIMiddleware(flask_app))
+app = FastAPI()
 
 # Telegram Bot Application
 telegram_app = None
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -48,6 +31,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = "Hello! 👋 Welcome to the bot. How can I assist you today?"
     await update.message.reply_text(message)
     logger.info(f"Sent welcome message to {user.first_name if user else 'unknown user'}.")
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -87,6 +71,7 @@ async def startup_event():
     else:
         logger.warning("Telegram bot application is already initialized.")
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """
@@ -99,8 +84,25 @@ async def shutdown_event():
         await telegram_app.stop()
         logger.info("Telegram bot application stopped successfully.")
 
+
+@app.get("/")
+async def root():
+    """
+    Root endpoint to confirm the bot's status.
+    """
+    return {"status": "ok", "message": "Bot is running!"}
+
+
+@app.head("/")
+async def root_head():
+    """
+    HEAD request handler for health checks.
+    """
+    return {"status": "ok"}
+
+
 @app.post("/webhook")
-async def webhook(request):
+async def webhook(request: Request):
     """
     Handles incoming Telegram updates via the webhook.
     """
@@ -120,8 +122,3 @@ async def webhook(request):
     except Exception as e:
         logger.exception(f"Error processing webhook: {e}")
         return {"status": "error", "message": str(e)}
-
-# Run FastAPI
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
