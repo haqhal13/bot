@@ -171,3 +171,8 @@ async def webhook(request: Request):
     try:
         update_json = await request.json()
         update = Update.de_json(update_json, telegram_app.bot)
+        await telegram_app.process_update(update)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.exception(f"Error processing webhook: {e}")
+        return {"status": "error", "message": str(e)}
