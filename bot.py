@@ -29,6 +29,48 @@ app = FastAPI()
 telegram_app = None
 
 
+@app.on_event("startup")
+async def startup_event():
+    global telegram_app
+    if telegram_app is None:
+        telegram_app = Application.builder().token(BOT_TOKEN).build()
+        telegram_app.add_handler(CommandHandler("start", start))
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection, pattern="select_.*"))
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method, pattern="paypal_.*|stripe_.*|crypto_.*|back|paid|support"))
+        await telegram_app.initialize()
+        logger.info("Telegram bot application initialized.")
+        await telegram_app.bot.delete_webhook()
+        await telegram_app.bot.set_webhook(WEBHOOK_URL)
+        await telegram_app.start()
+
+
+@app.post("/webhook")
+async def webhook(request: Request):
+    global telegram_app
+    if not telegram_app:
+        logger.error("Telegram application not initialized.")
+        return {"status": "error", "message": "Application not initialized"}
+    try:
+        update_json = await request.json()
+        update = Update.de_json(update_json, telegram_app.bot)
+        await telegram_app.process_update(update)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.exception(f"Error processing webhook: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/")
+async def root():
+    return {"status": "ok", "message": "Bot is running!"}
+
+
+@app.head("/uptime")
+async def uptime():
+    return {"status": "ok"}
+
+
+# The rest of the handlers and logic remain unchanged from your script
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("1 Month (£6.75)", callback_data="select_1_month")],
@@ -41,6 +83,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "💎 Choose your subscription plan below to proceed:",
         reply_markup=reply_markup,
     )
+
+# Other handler functions remain unchanged from your provided script...
 
 
 async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
