@@ -30,9 +30,6 @@ telegram_app = None
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Responds to the /start command with subscription options.
-    """
     keyboard = [
         [InlineKeyboardButton("1 Month (£6.75)", callback_data="select_1_month")],
         [InlineKeyboardButton("Lifetime (£10.00)", callback_data="select_lifetime")],
@@ -47,9 +44,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Handles user selection of subscription plans and payment methods.
-    """
     query = update.callback_query
     await query.answer()
 
@@ -89,9 +83,6 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
 
 
 async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Provides detailed instructions for each payment method.
-    """
     query = update.callback_query
     await query.answer()
 
@@ -173,30 +164,10 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
 
 @app.post("/webhook")
 async def webhook(request: Request):
-    """
-    Handles incoming Telegram updates via the webhook.
-    """
     global telegram_app
-
     if not telegram_app:
         logger.error("Telegram application not initialized.")
         return {"status": "error", "message": "Application not initialized"}
-
     try:
         update_json = await request.json()
         update = Update.de_json(update_json, telegram_app.bot)
-        await telegram_app.process_update(update)
-        return {"status": "ok"}
-    except Exception as e:
-        logger.exception(f"Error processing webhook: {e}")
-        return {"status": "error", "message": str(e)}
-
-
-@app.on_event("startup")
-async def startup_event():
-    global telegram_app
-    if telegram_app is None:
-        telegram_app = Application.builder().token(BOT_TOKEN).build()
-        telegram_app.add_handler(CommandHandler("start", start))
-        telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection, pattern="select_.*"))
-        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method,
