@@ -151,6 +151,17 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
+    elif query.data == "support":
+        message = (
+            "💬 *Contact Customer Support:*\n\n"
+            "If you need help, message us at:\n\n"
+            f"{SUPPORT_CONTACT}\n\n"
+            "⏰ Available: 8 AM - 12 AM BST."
+        )
+        keyboard = [[InlineKeyboardButton("Go Back", callback_data="back")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
+
     elif query.data == "back":
         await start(update.callback_query, context)
 
@@ -188,13 +199,4 @@ async def startup_event():
         telegram_app = Application.builder().token(BOT_TOKEN).build()
         telegram_app.add_handler(CommandHandler("start", start))
         telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection, pattern="select_.*"))
-        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method, pattern="paypal_.*|stripe_.*|crypto_.*|back|paid"))
-        await telegram_app.initialize()
-        await telegram_app.bot.delete_webhook()
-        await telegram_app.bot.set_webhook(WEBHOOK_URL)
-        await telegram_app.start()
-
-
-@app.get("/")
-async def root():
-    return {"status": "ok", "message": "Bot is running!"}
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method,
