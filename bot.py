@@ -1,7 +1,9 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 import logging
+import httpx
 
 # Constants
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
@@ -9,8 +11,8 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Payment Information
 PAYMENT_INFO = {
-    "1_month": {"price": "£6.75", "shopify_link": "https://stripe-backend-u0nn.onrender.com"},
-    "lifetime": {"price": "£10.00", "shopify_link": "https://stripe-backend-u0nn.onrender.com"},
+    "1_month": {"price": "£6.75", "shopify_link": "https://stripe-backend-u0nn.onrender.com/shopify-checkout"},
+    "lifetime": {"price": "£10.00", "shopify_link": "https://stripe-backend-u0nn.onrender.com/shopify-checkout"},
     "paypal_email": "onlyvipfan@outlook.com",
     "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
 }
@@ -68,6 +70,27 @@ async def root():
 @app.head("/uptime")
 async def uptime():
     return {"status": "ok"}
+
+
+@app.get("/shopify-checkout")
+async def load_checkout():
+    # Shopify Checkout URL
+    shopify_url = "https://yourstore.myshopify.com/checkouts/unique-session-id?skip_shop_pay=true"
+
+    # Fetch the Shopify checkout page
+    async with httpx.AsyncClient() as client:
+        response = await client.get(shopify_url)
+        original_html = response.text
+
+    # Inject custom CSS to hide the header
+    custom_css = """
+    <style>
+        header.header { display: none !important; }
+    </style>
+    """
+    modified_html = original_html.replace("</head>", f"{custom_css}</head>")
+
+    return HTMLResponse(content=modified_html)
 
 
 # Start Command Handler
@@ -130,25 +153,13 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
     query = update.callback_query
     await query.answer()
 
-    if query.data.startswith("paypal"):
-        message = (
-            "💰 *PayPal Payment:*\n\n"
-            "💰£10.00 GBP for LIFETIME\n"
-            "💰£6.75 GBP for 1 MONTH\n\n"
-            f"➡️ PayPal: {PAYMENT_INFO['paypal_email']}\n"
-            "✅ MUST BE FRIENDS AND FAMILY\n"
-            "✅ IF YOU DON'T HAVE FAMILY AND FRIENDS USE CARD/CRYPTO\n"
-            "❌ DON'T LEAVE A NOTE\n\n"
-            "➡️ CLICK 'I PAID'\n"
-            f"✅ SEND PAYMENT SCREENSHOT TO {SUPPORT_CONTACT} AND PROVIDE YOUR FULL PAYPAL NAME"
-        )
-        keyboard = [[InlineKeyboardButton("I Paid", callback_data="paid")], [InlineKeyboardButton("Go Back", callback_data="back")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
-    elif query.data.startswith("shopify"):
-        shopify_link = PAYMENT_INFO["1_month"]["shopify_link"] if query.data == "shopify_1_month" else PAYMENT_INFO["lifetime"]["shopify_link"]
-        amount = PAYMENT_INFO["1_month"]["price"] if query.data == "shopify_1_month" else PAYMENT_INFO["lifetime"]["price"]
+    if query.data.startswith("shopify"):
+        if query.data == "shopify_1_month":
+            shopify_link = "https://stripe-backend-u0nn.onrender.com/shopify-checkout"  # Backend URL
+            amount = PAYMENT_INFO["1_month"]["price"]
+        else:
+            shopify_link = "https://stripe-backend-u0nn.onrender.com/shopify-checkout"  # Backend URL
+            amount = PAYMENT_INFO["lifetime"]["price"]
 
         message = (
             f"🛒 *Shopify Payment ({amount}):*\n\n"
@@ -159,15 +170,4 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
         keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
-    elif query.data.startswith("crypto"):
-        amount = "$8" if query.data == "crypto_1_month" else "$14"
-        message = (
-            f"💰 *Crypto Payment ({amount}):*\n\n"
-            f"BTC: `{PAYMENT_INFO['crypto_addresses']['btc']}`\n"
-            f"ETH: `{PAYMENT_INFO['crypto_addresses']['eth']}`\n\n"
-            f"After payment, click 'I Paid' and send a screenshot or transaction ID to {SUPPORT_CONTACT}."
-        )
-        keyboard = [[InlineKeyboardButton("I Paid", callback_data="paid")], [InlineKeyboardButton("Go Back", callback_data="back")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
