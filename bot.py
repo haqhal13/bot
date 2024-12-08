@@ -67,15 +67,15 @@ async def root():
 async def pay_now_page(plan_type: str):
     # Map plan types to Shopify cart URLs
     shopify_cart_urls = {
-        "1_month": "https://your-store.myshopify.com/cart/123456789:1",  # Replace ID with your product ID
-        "lifetime": "https://your-store.myshopify.com/cart/987654321:1"
+        "1_month": "https://5fbqad-qz.myshopify.com/cart/123456789:1",  # Replace with actual variant ID
+        "lifetime": "https://5fbqad-qz.myshopify.com/cart/9925739086170:1"  # Replace with actual variant ID
     }
 
     # Validate plan type
     if plan_type not in shopify_cart_urls:
         return HTMLResponse("<h1>Invalid Plan</h1>", status_code=400)
 
-    # Generate HTML with "Pay Now" button
+    # Generate HTML with "Pay Now" button that auto-triggers redirect
     pay_now_html = f"""
     <html>
     <head>
