@@ -11,8 +11,8 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Payment Information
 PAYMENT_INFO = {
-    "1_month": {"price": "£6.75", "shopify_link": "https://bot-1-f2wh.onrender.com/shopify-checkout/1_month"},
-    "lifetime": {"price": "£10.00", "shopify_link": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"},
+    "1_month": {"price": "£6.75", "shopify_link": "/shopify-checkout/1_month"},
+    "lifetime": {"price": "£10.00", "shopify_link": "/shopify-checkout/lifetime"},
     "paypal_email": "onlyvipfan@outlook.com",
     "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
 }
@@ -50,7 +50,7 @@ async def startup_event():
 async def webhook(request: Request):
     global telegram_app
     if not telegram_app:
-        logger.error("Telegram application not initialized
+        logger.error("Telegram application not initialized.")
         return {"status": "error", "message": "Application not initialized"}
     try:
         update_json = await request.json()
@@ -67,56 +67,35 @@ async def root():
     return {"status": "ok", "message": "Bot is running!"}
 
 
-@app.head("/uptime")
-async def uptime():
-    return {"status": "ok"}
-
-
 @app.get("/shopify-checkout/{plan_type}")
-async def shopify_checkout(plan_type: str):
-    """
-    Serves Shopify checkout page in an iframe with the store name hidden.
-    """
+async def load_checkout(plan_type: str):
+    # Map plan types to correct Shopify checkout URLs
     shopify_urls = {
-        "1_month": "https://yourshopifystore.com/products/1-month-plan",
-        "lifetime": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"
+        "1_month": "https://5fbqad-qz.myshopify.com/checkouts/cn/1-month-checkout-url?skip_shop_pay=true",
+        "lifetime": "https://5fbqad-qz.myshopify.com/checkouts/cn/lifetime-checkout-url?skip_shop_pay=true"
     }
-    shopify_url = shopify_urls.get(plan_type)
-    if not shopify_url:
-        return {"status": "error", "message": "Invalid plan type"}
+    
+    # Validate plan type
+    if plan_type not in shopify_urls:
+        return HTMLResponse(content="<h1>Invalid Plan</h1>", status_code=400)
 
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Secure Checkout</title>
-        <style>
-            /* Hide Shopify header */
-            header.header, div#shopify-section-header {{
-                display: none !important;
-                pointer-events: none !important;
-                visibility: hidden !important;
-            }}
-            body, html {{
-                margin: 0;
-                padding: 0;
-                height: 100%;
-            }}
-            iframe {{
-                width: 100%;
-                height: 100%;
-                border: none;
-            }}
-        </style>
-    </head>
-    <body>
-        <iframe src="{shopify_url}" title="Shopify Checkout"></iframe>
-    </body>
-    </html>
+    # Fetch the Shopify checkout page
+    async with httpx.AsyncClient() as client:
+        response = await client.get(shopify_urls[plan_type])
+        if response.status_code != 200:
+            return HTMLResponse(content="<h1>Shopify Checkout Not Found</h1>", status_code=404)
+        original_html = response.text
+
+    # Inject custom CSS to hide the store name and header
+    custom_css = """
+    <style>
+        header.header { display: none !important; }
+        h1, .shop-name { display: none !important; }
+        a { pointer-events: none !important; }
+    </style>
     """
-    return HTMLResponse(content=html_content)
+    modified_html = original_html.replace("</head>", f"{custom_css}</head>")
+    return HTMLResponse(content=modified_html)
 
 
 # Start Command Handler
@@ -134,61 +113,43 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# Handle Payment Selection
 async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     if query.data == "select_1_month":
+        message = (
+            "💳 *1 Month Subscription (£6.75):*\n\n"
+            "Select your preferred payment method:"
+        )
         keyboard = [
             [InlineKeyboardButton("PayPal", callback_data="paypal_1_month")],
             [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_1_month")],
-            [InlineKeyboardButton("Crypto", callback_data="crypto_1_month")],
-            [InlineKeyboardButton("Support", callback_data="support")],
-            [InlineKeyboardButton("Go Back", callback_data="back")],
         ]
-        message = (
-            "💳 *1 Month Subscription (£6.75):*\n\n"
-            "Select your preferred payment method:\n\n"
-            "💡 Shopify: Instant access sent to your email.\n"
-            "💡 PayPal & Crypto: Sent to you within 30 mins."
-        )
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
+        await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data == "select_lifetime":
+        message = (
+            "💳 *Lifetime Subscription (£10.00):*\n\n"
+            "Select your preferred payment method:"
+        )
         keyboard = [
             [InlineKeyboardButton("PayPal", callback_data="paypal_lifetime")],
             [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_lifetime")],
-            [InlineKeyboardButton("Crypto", callback_data="crypto_lifetime")],
-            [InlineKeyboardButton("Support", callback_data="support")],
-            [InlineKeyboardButton("Go Back", callback_data="back")],
         ]
-        message = (
-            "💳 *Lifetime Subscription (£10.00):*\n\n"
-            "Select your preferred payment method:\n\n"
-            "💡 Shopify: Instant access sent to your email.\n"
-            "💡 PayPal & Crypto: Sent to you within 30 mins."
-        )
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
+        await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
 
 
-# Handle Payment Methods
 async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     if query.data.startswith("shopify"):
-        plan_type = "_".join(query.data.split("_")[1:])
-        shopify_link = PAYMENT_INFO[plan_type]["shopify_link"]
-        amount = PAYMENT_INFO[plan_type]["price"]
+        plan_type = query.data.split("_")[1]
+        shopify_link = f"https://bot-1-f2wh.onrender.com/shopify-checkout/{plan_type}"
         message = (
-            f"🛒 *Shopify Payment ({amount}):*\n\n"
-            "Pay securely on our Shopify store.\n\n"
-            "After payment, check your email for the VIP link.\n"
-            f"If you face any issues, contact {SUPPORT_CONTACT}."
+            "🛒 *Shopify Payment:*\n\n"
+            "Pay securely on our Shopify store. After payment, check your email for the VIP link."
         )
-        keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
+        keyboard = [[InlineKeyboardButton("Pay Now", web_app=WebAppInfo(url=shopify_link))]]
+        await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
