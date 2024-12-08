@@ -155,16 +155,14 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
             shopify_link = PAYMENT_INFO["lifetime"]["shopify_link"]
             amount = PAYMENT_INFO["lifetime"]["price"]
 
-        # Inject CSS to hide the Shopify shop name
-        custom_script_link = shopify_link
-
+        # Direct Shopify checkout link
         message = (
             f"🛒 *Shopify Payment ({amount}):*\n\n"
             "Pay securely on our Shopify store.\n\n"
             "After payment, check your email for the VIP link.\n"
             f"If you face any issues, contact {SUPPORT_CONTACT}."
         )
-        keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=custom_script_link))]]
+        keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
