@@ -9,8 +9,8 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Payment Information
 PAYMENT_INFO = {
-    "1_month": {"price": "£6.75", "shopify_link": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS05IMkswU0hORTFaUzUzQTgzQlQ4Mw?skip_shop_pay=true"},
-    "lifetime": {"price": "£10.00", "shopify_link": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"},
+    "1_month": {"price": "£6.75", "shopify_link": "https://stripe-backend-u0nn.onrender.com"},
+    "lifetime": {"price": "£10.00", "shopify_link": "https://stripe-backend-u0nn.onrender.com"},
     "paypal_email": "onlyvipfan@outlook.com",
     "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
 }
@@ -70,7 +70,7 @@ async def uptime():
     return {"status": "ok"}
 
 
-# The rest of the handlers and logic remain unchanged from your script
+# Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("1 Month (£6.75)", callback_data="select_1_month")],
@@ -85,6 +85,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+# Handle Payment Selection
 async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -115,7 +116,7 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
         )
         keyboard = [
             [InlineKeyboardButton("PayPal", callback_data="paypal_lifetime")],
-            [InlineKeyboardButton("Apple Pay/Google Pay", callback_data="shopify_lifetime")],
+            [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_lifetime")],
             [InlineKeyboardButton("Crypto", callback_data="crypto_lifetime")],
             [InlineKeyboardButton("Support", callback_data="support")],
             [InlineKeyboardButton("Go Back", callback_data="back")],
@@ -124,6 +125,7 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
 
+# Handle Payment Methods
 async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -140,61 +142,32 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
             "➡️ CLICK 'I PAID'\n"
             f"✅ SEND PAYMENT SCREENSHOT TO {SUPPORT_CONTACT} AND PROVIDE YOUR FULL PAYPAL NAME"
         )
-        keyboard = [
-            [InlineKeyboardButton("I Paid", callback_data="paid")],
-            [InlineKeyboardButton("Go Back", callback_data="back")],
-        ]
+        keyboard = [[InlineKeyboardButton("I Paid", callback_data="paid")], [InlineKeyboardButton("Go Back", callback_data="back")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
-elif query.data.startswith("shopify"):
-    if query.data == "shopify_1_month":
-        shopify_link = "https://stripe-backend-u0nn.onrender.com"
-        amount = PAYMENT_INFO["1_month"]["price"]
-    else:
-        shopify_link = "https://stripe-backend-u0nn.onrender.com"
-        amount = PAYMENT_INFO["lifetime"]["price"]
+    elif query.data.startswith("shopify"):
+        shopify_link = PAYMENT_INFO["1_month"]["shopify_link"] if query.data == "shopify_1_month" else PAYMENT_INFO["lifetime"]["shopify_link"]
+        amount = PAYMENT_INFO["1_month"]["price"] if query.data == "shopify_1_month" else PAYMENT_INFO["lifetime"]["price"]
 
-    message = (
-        f"🛒 *Shopify Payment ({amount}):*\n\n"
-        "Pay securely on our Shopify store.\n\n"
-        "After payment, check your email for the VIP link.\n"
-        f"If you face any issues, contact {SUPPORT_CONTACT}."
-    )
-    keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
+        message = (
+            f"🛒 *Shopify Payment ({amount}):*\n\n"
+            "Pay securely on our Shopify store.\n\n"
+            "After payment, check your email for the VIP link.\n"
+            f"If you face any issues, contact {SUPPORT_CONTACT}."
+        )
+        keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
+
     elif query.data.startswith("crypto"):
-        if query.data == "crypto_1_month":
-            amount = "$8"
-        else:
-            amount = "$14"
-
+        amount = "$8" if query.data == "crypto_1_month" else "$14"
         message = (
             f"💰 *Crypto Payment ({amount}):*\n\n"
             f"BTC: `{PAYMENT_INFO['crypto_addresses']['btc']}`\n"
             f"ETH: `{PAYMENT_INFO['crypto_addresses']['eth']}`\n\n"
             f"After payment, click 'I Paid' and send a screenshot or transaction ID to {SUPPORT_CONTACT}."
         )
-        keyboard = [
-            [InlineKeyboardButton("I Paid", callback_data="paid")],
-            [InlineKeyboardButton("Go Back", callback_data="back")],
-        ]
+        keyboard = [[InlineKeyboardButton("I Paid", callback_data="paid")], [InlineKeyboardButton("Go Back", callback_data="back")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
-
-@app.post("/webhook")
-async def webhook(request: Request):
-    global telegram_app
-    if not telegram_app:
-        logger.error("Telegram application not initialized.")
-        return {"status": "error", "message": "Application not initialized"}
-    try:
-        update_json = await request.json()  # Corrected line
-        update = Update.de_json(update_json, telegram_app.bot)
-        await telegram_app.process_update(update)
-        return {"status": "ok"}
-    except Exception as e:
-        logger.exception(f"Error processing webhook: {e}")
-        return {"status": "error", "message": str(e)}
