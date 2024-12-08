@@ -195,4 +195,10 @@ async def webhook(request: Request):
         logger.error("Telegram application not initialized.")
         return {"status": "error", "message": "Application not initialized"}
     try:
-        update_json =
+        update_json = await request.json()  # Corrected line
+        update = Update.de_json(update_json, telegram_app.bot)
+        await telegram_app.process_update(update)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.exception(f"Error processing webhook: {e}")
+        return {"status": "error", "message": str(e)}
