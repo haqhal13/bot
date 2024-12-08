@@ -30,7 +30,6 @@ app = FastAPI()
 # Telegram Bot Application
 telegram_app = None
 
-
 @app.on_event("startup")
 async def startup_event():
     global telegram_app
@@ -62,20 +61,10 @@ async def webhook(request: Request):
         return {"status": "error", "message": str(e)}
 
 
-@app.get("/")
-async def root():
-    return {"status": "ok", "message": "Bot is running!"}
-
-
-@app.head("/uptime")
-async def uptime():
-    return {"status": "ok"}
-
-
 @app.get("/shopify-checkout")
 async def load_checkout():
-    # Shopify Checkout URL
-    shopify_url = "https://yourstore.myshopify.com/checkouts/unique-session-id?skip_shop_pay=true"
+    # Replace with your Shopify Checkout URL
+    shopify_url = "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS05IMkswU0hORTFaUzUzQTgzQlQ4Mw?skip_shop_pay=true"
 
     # Fetch the Shopify checkout page
     async with httpx.AsyncClient() as client:
@@ -89,11 +78,10 @@ async def load_checkout():
     </style>
     """
     modified_html = original_html.replace("</head>", f"{custom_css}</head>")
-
     return HTMLResponse(content=modified_html)
 
 
-# Start Command Handler
+# Command Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("1 Month (£6.75)", callback_data="select_1_month")],
@@ -108,47 +96,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# Handle Payment Selection
 async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     if query.data == "select_1_month":
-        message = (
-            "💳 *1 Month Subscription (£6.75):*\n\n"
-            "Select your preferred payment method:\n\n"
-            "💡 Shopify: Instant access sent to your email.\n"
-            "💡 PayPal & Crypto: Sent to you within 30 mins between 8 AM - 12 AM BST."
-        )
+        message = "💳 *1 Month Subscription (£6.75):* Choose your payment method:"
         keyboard = [
+            [InlineKeyboardButton("Shopify", callback_data="shopify_1_month")],
             [InlineKeyboardButton("PayPal", callback_data="paypal_1_month")],
-            [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_1_month")],
             [InlineKeyboardButton("Crypto", callback_data="crypto_1_month")],
-            [InlineKeyboardButton("Support", callback_data="support")],
-            [InlineKeyboardButton("Go Back", callback_data="back")],
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
+        await query.edit_message_text(message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
     elif query.data == "select_lifetime":
-        message = (
-            "💳 *Lifetime Subscription (£10.00):*\n\n"
-            "Select your preferred payment method:\n\n"
-            "💡 Shopify: Instant access sent to your email.\n"
-            "💡 PayPal & Crypto: Sent to you within 30 mins between 8 AM - 12 AM BST."
-        )
+        message = "💳 *Lifetime Subscription (£10.00):* Choose your payment method:"
         keyboard = [
+            [InlineKeyboardButton("Shopify", callback_data="shopify_lifetime")],
             [InlineKeyboardButton("PayPal", callback_data="paypal_lifetime")],
-            [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_lifetime")],
             [InlineKeyboardButton("Crypto", callback_data="crypto_lifetime")],
-            [InlineKeyboardButton("Support", callback_data="support")],
-            [InlineKeyboardButton("Go Back", callback_data="back")],
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
+        await query.edit_message_text(message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
 
-# Handle Payment Methods
 async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -156,13 +125,6 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
     if query.data.startswith("shopify"):
         shopify_link = PAYMENT_INFO["1_month"]["shopify_link"] if query.data == "shopify_1_month" else PAYMENT_INFO["lifetime"]["shopify_link"]
         amount = PAYMENT_INFO["1_month"]["price"] if query.data == "shopify_1_month" else PAYMENT_INFO["lifetime"]["price"]
-
-        message = (
-            f"🛒 *Shopify Payment ({amount}):*\n\n"
-            "Pay securely on our Shopify store.\n\n"
-            "After payment, check your email for the VIP link.\n"
-            f"If you face any issues, contact {SUPPORT_CONTACT}."
-        )
+        message = f"🛒 *Shopify Payment ({amount}):*\nClick below to pay securely."
         keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
+        await query.edit_message_text(message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
