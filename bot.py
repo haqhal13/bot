@@ -155,13 +155,16 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
             shopify_link = PAYMENT_INFO["lifetime"]["shopify_link"]
             amount = PAYMENT_INFO["lifetime"]["price"]
 
+        # Inject CSS to hide the Shopify shop name
+        custom_script_link = f"https://yourserver.com/custom-css-loader?url={shopify_link}"
+
         message = (
             f"🛒 *Shopify Payment ({amount}):*\n\n"
             "Pay securely on our Shopify store.\n\n"
             "After payment, check your email for the VIP link.\n"
             f"If you face any issues, contact {SUPPORT_CONTACT}."
         )
-        keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
+        keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=custom_script_link))]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
@@ -192,10 +195,4 @@ async def webhook(request: Request):
         logger.error("Telegram application not initialized.")
         return {"status": "error", "message": "Application not initialized"}
     try:
-        update_json = await request.json()
-        update = Update.de_json(update_json, telegram_app.bot)
-        await telegram_app.process_update(update)
-        return {"status": "ok"}
-    except Exception as e:
-        logger.exception(f"Error processing webhook: {e}")
-        return {"status": "error", "message": str(e)}
+        update_json =
