@@ -12,7 +12,7 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 # Payment Information
 PAYMENT_INFO = {
     "1_month": {"price": "£6.75", "shopify_link": "/shopify-checkout/1_month"},
-    "lifetime": {"price": "£10.00", "shopify_link": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"},
+    "lifetime": {"price": "£10.00", "shopify_link": "/shopify-checkout/lifetime"},
     "paypal_email": "onlyvipfan@outlook.com",
     "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
 }
@@ -29,7 +29,6 @@ app = FastAPI()
 
 # Telegram Bot Application
 telegram_app = None
-
 
 @app.on_event("startup")
 async def startup_event():
@@ -61,18 +60,16 @@ async def webhook(request: Request):
         logger.exception(f"Error processing webhook: {e}")
         return {"status": "error", "message": str(e)}
 
-
 @app.get("/")
 async def root():
     return {"status": "ok", "message": "Bot is running!"}
-
 
 @app.get("/shopify-checkout/{plan_type}")
 async def load_checkout(plan_type: str):
     # Map plan types to correct Shopify checkout URLs
     shopify_urls = {
-        "1_month": "https://5fbqad-qz.myshopify.com/checkouts/cn/1-month-checkout-url?skip_shop_pay=true",
-        "lifetime": "https://5fbqad-qz.myshopify.com/checkouts/cn/lifetime-checkout-url?skip_shop_pay=true"
+        "1_month": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true",
+        "lifetime": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"
     }
     
     # Validate plan type
@@ -86,17 +83,16 @@ async def load_checkout(plan_type: str):
             return HTMLResponse(content="<h1>Shopify Checkout Not Found</h1>", status_code=404)
         original_html = response.text
 
-    # Inject custom CSS to hide the store name and header
+    # Inject custom CSS to hide the store name, header, and disable links
     custom_css = """
     <style>
         header.header { display: none !important; }
         h1, .shop-name { display: none !important; }
-        a { pointer-events: none !important; }
+        a { pointer-events: none !important; text-decoration: none !important; }
     </style>
     """
     modified_html = original_html.replace("</head>", f"{custom_css}</head>")
     return HTMLResponse(content=modified_html)
-
 
 # Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -112,7 +108,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup,
     )
 
-
+# Handle Payment Selection
 async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -139,7 +135,7 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
         ]
         await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
 
-
+# Handle Payment Methods
 async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
