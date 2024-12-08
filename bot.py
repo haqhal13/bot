@@ -156,7 +156,7 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
             amount = PAYMENT_INFO["lifetime"]["price"]
 
         # Inject CSS to hide the Shopify shop name
-        custom_script_link = f"https://yourserver.com/custom-css-loader?url={shopify_link}"
+        custom_script_link = shopify_link
 
         message = (
             f"🛒 *Shopify Payment ({amount}):*\n\n"
