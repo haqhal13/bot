@@ -3,6 +3,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 import logging
+import httpx
 
 # Constants
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
@@ -10,8 +11,8 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Payment Information
 PAYMENT_INFO = {
-    "1_month": {"price": "£6.75", "shopify_link": "https://stripe-backend-u0nn.onrender.com/shopify-checkout/1_month"},
-    "lifetime": {"price": "£10.00", "shopify_link": "https://stripe-backend-u0nn.onrender.com/shopify-checkout/lifetime"},
+    "1_month": {"price": "£6.75", "shopify_link": "https://bot-1-f2wh.onrender.com/shopify-checkout/1_month"},
+    "lifetime": {"price": "£10.00", "shopify_link": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"},
     "paypal_email": "onlyvipfan@outlook.com",
     "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
 }
@@ -49,7 +50,7 @@ async def startup_event():
 async def webhook(request: Request):
     global telegram_app
     if not telegram_app:
-        logger.error("Telegram application not initialized.")
+        logger.error("Telegram application not initialized
         return {"status": "error", "message": "Application not initialized"}
     try:
         update_json = await request.json()
