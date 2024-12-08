@@ -147,25 +147,23 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
-    elif query.data.startswith("shopify"):
-        if query.data == "shopify_1_month":
-            shopify_link = PAYMENT_INFO["1_month"]["shopify_link"]
-            amount = PAYMENT_INFO["1_month"]["price"]
-        else:
-            shopify_link = PAYMENT_INFO["lifetime"]["shopify_link"]
-            amount = PAYMENT_INFO["lifetime"]["price"]
+   elif query.data.startswith("shopify"):
+    if query.data == "shopify_1_month":
+        shopify_link = "https://stripe-backend-u0nn.onrender.com"
+        amount = PAYMENT_INFO["1_month"]["price"]
+    else:
+        shopify_link = "https://stripe-backend-u0nn.onrender.com"
+        amount = PAYMENT_INFO["lifetime"]["price"]
 
-        # Direct Shopify checkout link
-        message = (
-            f"🛒 *Shopify Payment ({amount}):*\n\n"
-            "Pay securely on our Shopify store.\n\n"
-            "After payment, check your email for the VIP link.\n"
-            f"If you face any issues, contact {SUPPORT_CONTACT}."
-        )
-        keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
+    message = (
+        f"🛒 *Shopify Payment ({amount}):*\n\n"
+        "Pay securely on our Shopify store.\n\n"
+        "After payment, check your email for the VIP link.\n"
+        f"If you face any issues, contact {SUPPORT_CONTACT}."
+    )
+    keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
     elif query.data.startswith("crypto"):
         if query.data == "crypto_1_month":
             amount = "$8"
