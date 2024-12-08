@@ -9,8 +9,8 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Payment Information
 PAYMENT_INFO = {
-    "1_month": {"price": "£6.75", "stripe_link": "https://buy.stripe.com/bIYbIMane1pCeY0eUZ"},
-    "lifetime": {"price": "£10.00", "stripe_link": "https://buy.stripe.com/aEUeUYaneecoeY03cc"},
+    "1_month": {"price": "£6.75", "shopify_link": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS05IMkswU0hORTFaUzUzQTgzQlQ4Mw?skip_shop_pay=true"},
+    "lifetime": {"price": "£10.00", "shopify_link": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"},
     "paypal_email": "onlyvipfan@outlook.com",
     "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
 }
@@ -36,7 +36,7 @@ async def startup_event():
         telegram_app = Application.builder().token(BOT_TOKEN).build()
         telegram_app.add_handler(CommandHandler("start", start))
         telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection, pattern="select_.*"))
-        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method, pattern="paypal_.*|stripe_.*|crypto_.*|back|paid|support"))
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method, pattern="paypal_.*|shopify_.*|crypto_.*|back|paid|support"))
         await telegram_app.initialize()
         logger.info("Telegram bot application initialized.")
         await telegram_app.bot.delete_webhook()
@@ -84,8 +84,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup,
     )
 
-# Other handler functions remain unchanged from your provided script...
-
 
 async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -95,12 +93,12 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
         message = (
             "💳 *1 Month Subscription (£6.75):*\n\n"
             "Select your preferred payment method:\n\n"
-            "💡 Apple Pay / Google Pay: Instant access sent to your email.\n"
+            "💡 Shopify: Instant access sent to your email.\n"
             "💡 PayPal & Crypto: Sent to you within 30 mins between 8 AM - 12 AM BST."
         )
         keyboard = [
             [InlineKeyboardButton("PayPal", callback_data="paypal_1_month")],
-            [InlineKeyboardButton("Apple Pay / Google Pay (Media App)", callback_data="stripe_1_month")],
+            [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_1_month")],
             [InlineKeyboardButton("Crypto", callback_data="crypto_1_month")],
             [InlineKeyboardButton("Support", callback_data="support")],
             [InlineKeyboardButton("Go Back", callback_data="back")],
@@ -112,12 +110,12 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
         message = (
             "💳 *Lifetime Subscription (£10.00):*\n\n"
             "Select your preferred payment method:\n\n"
-            "💡 Apple Pay / Google Pay: Instant access sent to your email.\n"
+            "💡 Shopify: Instant access sent to your email.\n"
             "💡 PayPal & Crypto: Sent to you within 30 mins between 8 AM - 12 AM BST."
         )
         keyboard = [
             [InlineKeyboardButton("PayPal", callback_data="paypal_lifetime")],
-            [InlineKeyboardButton("Apple Pay / Google Pay (Media App)", callback_data="stripe_lifetime")],
+            [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_lifetime")],
             [InlineKeyboardButton("Crypto", callback_data="crypto_lifetime")],
             [InlineKeyboardButton("Support", callback_data="support")],
             [InlineKeyboardButton("Go Back", callback_data="back")],
@@ -149,21 +147,21 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
-    elif query.data.startswith("stripe"):
-        if query.data == "stripe_1_month":
-            stripe_link = PAYMENT_INFO["1_month"]["stripe_link"]
+    elif query.data.startswith("shopify"):
+        if query.data == "shopify_1_month":
+            shopify_link = PAYMENT_INFO["1_month"]["shopify_link"]
             amount = PAYMENT_INFO["1_month"]["price"]
         else:
-            stripe_link = PAYMENT_INFO["lifetime"]["stripe_link"]
+            shopify_link = PAYMENT_INFO["lifetime"]["shopify_link"]
             amount = PAYMENT_INFO["lifetime"]["price"]
 
         message = (
-            f"💳 *Apple Pay / Google Pay Payment ({amount}):*\n\n"
-            "Pay securely using Apple Pay or Google Pay within Telegram.\n\n"
+            f"🛒 *Shopify Payment ({amount}):*\n\n"
+            "Pay securely on our Shopify store.\n\n"
             "After payment, check your email for the VIP link.\n"
-            f"If the link isn't there, message {SUPPORT_CONTACT}."
+            f"If you face any issues, contact {SUPPORT_CONTACT}."
         )
-        keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=stripe_link))]]
+        keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
@@ -184,25 +182,6 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
             [InlineKeyboardButton("Go Back", callback_data="back")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
-    elif query.data == "support":
-        message = (
-            "💬 *Contact Customer Support:*\n\n"
-            "If you need help, message us at:\n\n"
-            f"{SUPPORT_CONTACT}\n\n"
-            "⏰ Available: 8 AM - 12 AM BST."
-        )
-        keyboard = [[InlineKeyboardButton("Go Back", callback_data="back")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
-    elif query.data == "back":
-        await start(update.callback_query, context)
-
-    elif query.data == "paid":
-        message = f"✅ Provide Screenshot/Other Details Mentioned in Your Payment Instructions Message to {SUPPORT_CONTACT}."
-        reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("Go Back", callback_data="back")]])
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
 
