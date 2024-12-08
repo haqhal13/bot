@@ -5,14 +5,17 @@ from fastapi.responses import HTMLResponse
 import logging
 
 # Constants
-BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
-WEBHOOK_URL = "https://your-render-url.com/webhook"
+BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"  # Your bot token
+WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
-# Shopify Checkout Links (Replace with your dynamic cart links)
+# Shopify Checkout Links
 SHOPIFY_CART_URLS = {
-    "1_month": "https://your-store.myshopify.com/cart/123456789:1",  # Product ID for 1-month subscription
-    "lifetime": "https://your-store.myshopify.com/cart/987654321:1"  # Product ID for lifetime subscription
+    "1_month": "https://5fbqad-qz.myshopify.com/cart/123456789:1",  # Replace with 1-month variant ID
+    "lifetime": "https://5fbqad-qz.myshopify.com/cart/9925739086170:1"  # Replace with lifetime variant ID
 }
+
+# Support Contact
+SUPPORT_CONTACT = "@ZakiVip1"
 
 # Logging Configuration
 logging.basicConfig(level=logging.DEBUG)
@@ -31,8 +34,9 @@ async def startup_event():
         telegram_app = Application.builder().token(BOT_TOKEN).build()
         telegram_app.add_handler(CommandHandler("start", start))
         telegram_app.add_handler(CallbackQueryHandler(handle_payment_selection, pattern="select_.*"))
-        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method, pattern="shopify_.*"))
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method, pattern="shopify_.*|support"))
         await telegram_app.initialize()
+        logger.info("Telegram bot application initialized.")
         await telegram_app.bot.delete_webhook()
         await telegram_app.bot.set_webhook(WEBHOOK_URL)
         await telegram_app.start()
@@ -40,27 +44,34 @@ async def startup_event():
 @app.post("/webhook")
 async def webhook(request: Request):
     global telegram_app
-    update_json = await request.json()
-    update = Update.de_json(update_json, telegram_app.bot)
-    await telegram_app.process_update(update)
-    return {"status": "ok"}
+    if not telegram_app:
+        logger.error("Telegram application not initialized.")
+        return {"status": "error", "message": "Application not initialized"}
+    try:
+        update_json = await request.json()
+        update = Update.de_json(update_json, telegram_app.bot)
+        await telegram_app.process_update(update)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.exception(f"Error processing webhook: {e}")
+        return {"status": "error", "message": str(e)}
 
 @app.get("/")
 async def root():
     return {"status": "ok", "message": "Bot is running!"}
 
-# Intermediate "Pay Now" Page
+# "Pay Now" Intermediate Page for Checkout
 @app.get("/pay-now/{plan_type}")
 async def pay_now_page(plan_type: str):
-    # Check if plan_type is valid
+    # Validate plan type
     if plan_type not in SHOPIFY_CART_URLS:
         return HTMLResponse("<h1>Invalid Plan</h1>", status_code=400)
-    
+
     # HTML with auto-redirect to Shopify checkout
     pay_now_html = f"""
     <html>
     <head>
-        <title>Pay Now</title>
+        <title>Redirecting to Checkout...</title>
         <meta http-equiv="refresh" content="0;url={SHOPIFY_CART_URLS[plan_type]}" />
         <script>
             window.onload = function() {{
@@ -80,36 +91,46 @@ async def pay_now_page(plan_type: str):
     """
     return HTMLResponse(content=pay_now_html)
 
-# Telegram Bot Handlers
+# Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("1 Month (£6.75)", callback_data="select_1_month")],
         [InlineKeyboardButton("Lifetime (£10.00)", callback_data="select_lifetime")],
+        [InlineKeyboardButton("Support", callback_data="support")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("👋 Choose your subscription plan below:", reply_markup=reply_markup)
+    await update.message.reply_text(
+        "👋 Welcome to the VIP Bot!\n\n"
+        "💎 Choose your subscription plan below to proceed:",
+        reply_markup=reply_markup,
+    )
 
+# Handle Payment Selection
 async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     if query.data == "select_1_month":
+        message = "💳 *1 Month Subscription (£6.75):*\n\nClick below to proceed:"
         keyboard = [[InlineKeyboardButton("Pay Now", callback_data="shopify_1_month")]]
-        await query.edit_message_text("💳 *1 Month Subscription (£6.75):*\nClick below to pay securely:", 
-                                      reply_markup=InlineKeyboardMarkup(keyboard))
+        await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data == "select_lifetime":
+        message = "💳 *Lifetime Subscription (£10.00):*\n\nClick below to proceed:"
         keyboard = [[InlineKeyboardButton("Pay Now", callback_data="shopify_lifetime")]]
-        await query.edit_message_text("💳 *Lifetime Subscription (£10.00):*\nClick below to pay securely:", 
-                                      reply_markup=InlineKeyboardMarkup(keyboard))
+        await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
 
+    elif query.data == "support":
+        await query.edit_message_text(f"💬 Contact Support: {SUPPORT_CONTACT}")
+
+# Handle Payment Methods
 async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    plan_type = query.data.split("_")[1]
-    pay_now_link = f"https://your-render-url.com/pay-now/{plan_type}"  # Link to FastAPI page
-
-    keyboard = [[InlineKeyboardButton("Pay Now", web_app=WebAppInfo(url=pay_now_link))]]
-    await query.edit_message_text("🛒 *Proceed to Checkout:*\nClick below to complete your payment:",
-                                  reply_markup=InlineKeyboardMarkup(keyboard))
+    if query.data.startswith("shopify"):
+        plan_type = query.data.split("_")[1]
+        pay_link = f"https://bot-1-f2wh.onrender.com/pay-now/{plan_type}"
+        message = "🛒 *Pay Now:*\n\nClick below to proceed with payment securely."
+        keyboard = [[InlineKeyboardButton("Pay Now", web_app=WebAppInfo(url=pay_link))]]
+        await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
