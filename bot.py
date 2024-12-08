@@ -147,7 +147,7 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
-   elif query.data.startswith("shopify"):
+elif query.data.startswith("shopify"):
     if query.data == "shopify_1_month":
         shopify_link = "https://stripe-backend-u0nn.onrender.com"
         amount = PAYMENT_INFO["1_month"]["price"]
