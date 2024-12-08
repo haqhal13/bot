@@ -3,7 +3,6 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 import logging
-import httpx
 
 # Constants
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
@@ -11,8 +10,8 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Payment Information
 PAYMENT_INFO = {
-    "1_month": {"price": "£6.75", "shopify_link": "/shopify-checkout/1_month"},
-    "lifetime": {"price": "£10.00", "shopify_link": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"},
+    "1_month": {"price": "£6.75", "fastapi_pay_link": "/pay-now/1_month"},
+    "lifetime": {"price": "£10.00", "fastapi_pay_link": "/pay-now/lifetime"},
     "paypal_email": "onlyvipfan@outlook.com",
     "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
 }
@@ -44,7 +43,6 @@ async def startup_event():
         await telegram_app.bot.set_webhook(WEBHOOK_URL)
         await telegram_app.start()
 
-
 @app.post("/webhook")
 async def webhook(request: Request):
     global telegram_app
@@ -64,35 +62,43 @@ async def webhook(request: Request):
 async def root():
     return {"status": "ok", "message": "Bot is running!"}
 
-@app.get("/shopify-checkout/{plan_type}")
-async def load_checkout(plan_type: str):
-    # Map plan types to correct Shopify checkout URLs
-    shopify_urls = {
-        "1_month": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true",
-        "lifetime": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"
+# "Pay Now" FastAPI Page
+@app.get("/pay-now/{plan_type}")
+async def pay_now_page(plan_type: str):
+    # Map plan types to Shopify cart URLs
+    shopify_cart_urls = {
+        "1_month": "https://your-store.myshopify.com/cart/123456789:1",  # Replace ID with your product ID
+        "lifetime": "https://your-store.myshopify.com/cart/987654321:1"
     }
-    
+
     # Validate plan type
-    if plan_type not in shopify_urls:
-        return HTMLResponse(content="<h1>Invalid Plan</h1>", status_code=400)
+    if plan_type not in shopify_cart_urls:
+        return HTMLResponse("<h1>Invalid Plan</h1>", status_code=400)
 
-    # Fetch the Shopify checkout page
-    async with httpx.AsyncClient() as client:
-        response = await client.get(shopify_urls[plan_type])
-        if response.status_code != 200:
-            return HTMLResponse(content="<h1>Shopify Checkout Not Found</h1>", status_code=404)
-        original_html = response.text
-
-    # Inject custom CSS to hide the store name, header, and disable links
-    custom_css = """
-    <style>
-        header.header { display: none !important; }
-        h1, .shop-name { display: none !important; }
-        a { pointer-events: none !important; text-decoration: none !important; }
-    </style>
+    # Generate HTML with "Pay Now" button
+    pay_now_html = f"""
+    <html>
+    <head>
+        <title>Pay Now</title>
+        <script>
+            function redirectToCheckout() {{
+                window.location.href = "{shopify_cart_urls[plan_type]}";
+            }}
+            window.onload = redirectToCheckout;  // Auto-trigger redirect
+        </script>
+    </head>
+    <body>
+        <div style="text-align:center; margin-top:20%;">
+            <h2>Click the button below to proceed with payment</h2>
+            <button onclick="redirectToCheckout()" 
+                style="padding:10px 20px; background-color:blue; color:white; border:none; font-size:16px;">
+                Pay Now
+            </button>
+        </div>
+    </body>
+    </html>
     """
-    modified_html = original_html.replace("</head>", f"{custom_css}</head>")
-    return HTMLResponse(content=modified_html)
+    return HTMLResponse(content=pay_now_html)
 
 # Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -120,7 +126,7 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
         )
         keyboard = [
             [InlineKeyboardButton("PayPal", callback_data="paypal_1_month")],
-            [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_1_month")],
+            [InlineKeyboardButton("Pay Now (Shopify)", callback_data="shopify_1_month")],
         ]
         await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
 
@@ -131,7 +137,7 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
         )
         keyboard = [
             [InlineKeyboardButton("PayPal", callback_data="paypal_lifetime")],
-            [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_lifetime")],
+            [InlineKeyboardButton("Pay Now (Shopify)", callback_data="shopify_lifetime")],
         ]
         await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
 
@@ -142,10 +148,10 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
 
     if query.data.startswith("shopify"):
         plan_type = query.data.split("_")[1]
-        shopify_link = f"https://bot-1-f2wh.onrender.com/shopify-checkout/{plan_type}"
+        pay_link = f"https://bot-1-f2wh.onrender.com/pay-now/{plan_type}"
         message = (
-            "🛒 *Shopify Payment:*\n\n"
-            "Pay securely on our Shopify store. After payment, check your email for the VIP link."
+            "🛒 *Pay Now:*\n\n"
+            "Click below to proceed with payment securely."
         )
-        keyboard = [[InlineKeyboardButton("Pay Now", web_app=WebAppInfo(url=shopify_link))]]
+        keyboard = [[InlineKeyboardButton("Pay Now", web_app=WebAppInfo(url=pay_link))]]
         await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
