@@ -1,6 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 import logging
 
 # Constants
@@ -9,8 +10,8 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
 # Payment Information
 PAYMENT_INFO = {
-    "1_month": {"price": "£6.75", "shopify_link": "https://yourshopifystore.com/products/1-month-plan"},
-    "lifetime": {"price": "£10.00", "shopify_link": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"},
+    "1_month": {"price": "£6.75", "shopify_link": "https://stripe-backend-u0nn.onrender.com/shopify-checkout/1_month"},
+    "lifetime": {"price": "£10.00", "shopify_link": "https://stripe-backend-u0nn.onrender.com/shopify-checkout/lifetime"},
     "paypal_email": "onlyvipfan@outlook.com",
     "crypto_addresses": {"btc": "your-bitcoin-wallet", "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
 }
@@ -70,6 +71,53 @@ async def uptime():
     return {"status": "ok"}
 
 
+@app.get("/shopify-checkout/{plan_type}")
+async def shopify_checkout(plan_type: str):
+    """
+    Serves Shopify checkout page in an iframe with the store name hidden.
+    """
+    shopify_urls = {
+        "1_month": "https://yourshopifystore.com/products/1-month-plan",
+        "lifetime": "https://5fbqad-qz.myshopify.com/checkouts/cn/Z2NwLWV1cm9wZS13ZXN0NDowMUpFS01ZUVg1S0ZQMFo0U0pCRUVRNzRRRA?skip_shop_pay=true"
+    }
+    shopify_url = shopify_urls.get(plan_type)
+    if not shopify_url:
+        return {"status": "error", "message": "Invalid plan type"}
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Secure Checkout</title>
+        <style>
+            /* Hide Shopify header */
+            header.header, div#shopify-section-header {{
+                display: none !important;
+                pointer-events: none !important;
+                visibility: hidden !important;
+            }}
+            body, html {{
+                margin: 0;
+                padding: 0;
+                height: 100%;
+            }}
+            iframe {{
+                width: 100%;
+                height: 100%;
+                border: none;
+            }}
+        </style>
+    </head>
+    <body>
+        <iframe src="{shopify_url}" title="Shopify Checkout"></iframe>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
+
 # Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
@@ -91,12 +139,6 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
     await query.answer()
 
     if query.data == "select_1_month":
-        message = (
-            "💳 *1 Month Subscription (£6.75):*\n\n"
-            "Select your preferred payment method:\n\n"
-            "💡 Shopify: Instant access sent to your email.\n"
-            "💡 PayPal & Crypto: Sent to you within 30 mins between 8 AM - 12 AM BST."
-        )
         keyboard = [
             [InlineKeyboardButton("PayPal", callback_data="paypal_1_month")],
             [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_1_month")],
@@ -104,16 +146,16 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
             [InlineKeyboardButton("Support", callback_data="support")],
             [InlineKeyboardButton("Go Back", callback_data="back")],
         ]
+        message = (
+            "💳 *1 Month Subscription (£6.75):*\n\n"
+            "Select your preferred payment method:\n\n"
+            "💡 Shopify: Instant access sent to your email.\n"
+            "💡 PayPal & Crypto: Sent to you within 30 mins."
+        )
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
     elif query.data == "select_lifetime":
-        message = (
-            "💳 *Lifetime Subscription (£10.00):*\n\n"
-            "Select your preferred payment method:\n\n"
-            "💡 Shopify: Instant access sent to your email.\n"
-            "💡 PayPal & Crypto: Sent to you within 30 mins between 8 AM - 12 AM BST."
-        )
         keyboard = [
             [InlineKeyboardButton("PayPal", callback_data="paypal_lifetime")],
             [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_lifetime")],
@@ -121,6 +163,12 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
             [InlineKeyboardButton("Support", callback_data="support")],
             [InlineKeyboardButton("Go Back", callback_data="back")],
         ]
+        message = (
+            "💳 *Lifetime Subscription (£10.00):*\n\n"
+            "Select your preferred payment method:\n\n"
+            "💡 Shopify: Instant access sent to your email.\n"
+            "💡 PayPal & Crypto: Sent to you within 30 mins."
+        )
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
 
@@ -131,10 +179,9 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
     await query.answer()
 
     if query.data.startswith("shopify"):
-        plan_type = "_".join(query.data.split("_")[1:])  # Extract full plan type
+        plan_type = "_".join(query.data.split("_")[1:])
         shopify_link = PAYMENT_INFO[plan_type]["shopify_link"]
         amount = PAYMENT_INFO[plan_type]["price"]
-
         message = (
             f"🛒 *Shopify Payment ({amount}):*\n\n"
             "Pay securely on our Shopify store.\n\n"
@@ -142,34 +189,5 @@ async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TY
             f"If you face any issues, contact {SUPPORT_CONTACT}."
         )
         keyboard = [[InlineKeyboardButton(f"Pay Now ({amount})", web_app=WebAppInfo(url=shopify_link))]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
-    elif query.data.startswith("paypal"):
-        plan_type = "_".join(query.data.split("_")[1:])
-        amount = PAYMENT_INFO[plan_type]["price"]
-
-        message = (
-            f"💰 *PayPal Payment ({amount}):*\n\n"
-            f"➡️ PayPal: {PAYMENT_INFO['paypal_email']}\n"
-            "✅ MUST BE FRIENDS AND FAMILY\n"
-            "❌ DON'T LEAVE A NOTE\n\n"
-            f"✅ SEND PAYMENT SCREENSHOT TO {SUPPORT_CONTACT}"
-        )
-        keyboard = [[InlineKeyboardButton("I Paid", callback_data="paid")], [InlineKeyboardButton("Go Back", callback_data="back")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
-
-    elif query.data.startswith("crypto"):
-        plan_type = "_".join(query.data.split("_")[1:])
-        amount = "$8" if plan_type == "1_month" else "$14"
-
-        message = (
-            f"💰 *Crypto Payment ({amount}):*\n\n"
-            f"BTC: `{PAYMENT_INFO['crypto_addresses']['btc']}`\n"
-            f"ETH: `{PAYMENT_INFO['crypto_addresses']['eth']}`\n\n"
-            f"After payment, click 'I Paid' and send a screenshot or transaction ID to {SUPPORT_CONTACT}."
-        )
-        keyboard = [[InlineKeyboardButton("I Paid", callback_data="paid")], [InlineKeyboardButton("Go Back", callback_data="back")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text=message, reply_markup=reply_markup, parse_mode="Markdown")
