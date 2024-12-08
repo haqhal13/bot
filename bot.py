@@ -115,7 +115,7 @@ async def handle_payment_selection(update: Update, context: ContextTypes.DEFAULT
         )
         keyboard = [
             [InlineKeyboardButton("PayPal", callback_data="paypal_lifetime")],
-            [InlineKeyboardButton("Shopify (Secure Payment)", callback_data="shopify_lifetime")],
+            [InlineKeyboardButton("Apple Pay/Google Pay", callback_data="shopify_lifetime")],
             [InlineKeyboardButton("Crypto", callback_data="crypto_lifetime")],
             [InlineKeyboardButton("Support", callback_data="support")],
             [InlineKeyboardButton("Go Back", callback_data="back")],
