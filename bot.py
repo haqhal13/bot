@@ -149,13 +149,15 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = query.from_user.username or "No Username"
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Notify Admin
+   # Notify Admin
     try:
         await context.bot.send_message(
-            chat_id=ADMIN_CHAT_ID,
+            chat_id=ADMIN_CHAT_ID,  
             text=(
-                f"✅ **Payment Confirmed**\n"
+                f"📝 **New Payment Initiated**\n"
                 f"👤 User: @{username}\n"
+                f"📋 Plan: {plan_text}\n"
+                f"💳 Method: {method.capitalize()}\n"
                 f"🕒 Time: {current_time}"
             ),
             parse_mode="Markdown"
