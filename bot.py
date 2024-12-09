@@ -1,3 +1,4 @@
+from flask import Flask
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from fastapi import FastAPI, Request
@@ -5,11 +6,11 @@ import logging
 import httpx
 from datetime import datetime
 from fastapi.responses import JSONResponse
+import threading
 
 # Constants
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
-UPTIME_MONITOR_URL = "https://bot-1-f2wh.onrender.com/uptime"
 SUPPORT_CONTACT = "@ZakiVip1"
 ADMIN_CHAT_ID = 834523364  # Replace with the admin's chat ID
 
@@ -25,12 +26,25 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("bot")
 
 # FastAPI App
-app = FastAPI()
+fastapi_app = FastAPI()
 telegram_app = None
 START_TIME = datetime.now()
 
+# Flask App for Uptime Monitoring
+flask_app = Flask(__name__)
 
-@app.on_event("startup")
+@flask_app.route("/", methods=["GET"])
+def uptime_home():
+    """Root route to confirm the bot is live."""
+    return "Bot is active at root!", 200
+
+@flask_app.route("/ping", methods=["GET", "HEAD"])
+def uptime_ping():
+    """UptimeRobot Ping Endpoint"""
+    return "Bot is active at ping!", 200
+
+
+@fastapi_app.on_event("startup")
 async def startup_event():
     global telegram_app
     telegram_app = Application.builder().token(BOT_TOKEN).build()
@@ -43,18 +57,13 @@ async def startup_event():
 
     logger.info("Telegram Bot Initialized!")
 
-    # Uptime Robot Monitoring
-    async with httpx.AsyncClient() as client:
-        await client.get(UPTIME_MONITOR_URL)
-        logger.info("Uptime Monitoring Reintegrated!")
-
     await telegram_app.initialize()
     await telegram_app.bot.delete_webhook()
     await telegram_app.bot.set_webhook(WEBHOOK_URL)
     await telegram_app.start()
 
 
-@app.post("/webhook")
+@fastapi_app.post("/webhook")
 async def webhook(request: Request):
     global telegram_app
     update = Update.de_json(await request.json(), telegram_app.bot)
@@ -62,7 +71,7 @@ async def webhook(request: Request):
     return {"status": "ok"}
 
 
-@app.get("/uptime")
+@fastapi_app.get("/uptime")
 async def get_uptime():
     current_time = datetime.now()
     uptime_duration = current_time - START_TIME
@@ -118,13 +127,9 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     _, method, plan = query.data.split("_")
     plan_text = "LIFETIME" if plan == "lifetime" else "1 MONTH"
-    username = query.from_user.username or "No Username"
-
-    # Store data for later use in confirmation
     context.user_data["plan_text"] = plan_text
     context.user_data["method"] = method
 
-    # Payment Details
     if method == "shopify":
         message = (
             "💳 **Apple Pay/Google Pay (Instant Access):**\n\n"
@@ -141,7 +146,6 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = (
             "⚡ **Crypto Payment:**\nSend payment to:\n🔗 `"
             f"{PAYMENT_INFO['crypto']['eth']}`\n\n"
-            "💰 Prices:\n- $8 Monthly\n- $15 Lifetime\n\n"
             "✅ After payment, click 'I've Paid'."
         )
         keyboard = [[InlineKeyboardButton("I've Paid", callback_data="paid")]]
@@ -149,17 +153,10 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = (
             "💰 **PayPal Payment:**\n\n"
             f"➡️ PayPal: `{PAYMENT_INFO['paypal']}`\n\n"
-            "💰 £10.00 GBP for LIFETIME\n"
-            "💰 £6.75 GBP for 1 MONTH\n\n"
-            "✅ MUST BE FRIENDS AND FAMILY\n❌ DON'T LEAVE A NOTE\n\n"
-            "✅ After payment, click 'I've Paid'."
+            "✅ MUST BE FRIENDS AND FAMILY\n❌ DON'T LEAVE A NOTE"
         )
         keyboard = [[InlineKeyboardButton("I've Paid", callback_data="paid")]]
 
-    keyboard += [
-        [InlineKeyboardButton("Support", callback_data="support")],
-        [InlineKeyboardButton("Go Back", callback_data="back")]
-    ]
     await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
 
@@ -167,54 +164,26 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-
     username = query.from_user.username or "No Username"
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    plan_text = context.user_data.get("plan_text", "N/A")
-    method = context.user_data.get("method", "N/A")
 
-    # Notify admin
     await context.bot.send_message(
         chat_id=ADMIN_CHAT_ID,
-        text=(
-            f"📝 **Payment Notification**\n"
-            f"👤 **User:** @{username}\n"
-            f"📋 **Plan:** {plan_text}\n"
-            f"💳 **Method:** {method.capitalize()}\n"
-            f"🕒 **Time:** {current_time}"
-        ),
-        parse_mode="Markdown"
+        text=f"📝 **Payment Notification**\n👤 **User:** @{username}\n📋 **Plan:** {context.user_data['plan_text']}"
     )
-
-    # Notify user
-    await query.edit_message_text(
-        text=(
-            f"✅ Thank you for your payment!\n\n"
-            f"📸 Please send a screenshot or transaction ID to {SUPPORT_CONTACT} for verification."
-        ),
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Support", callback_data="support")],
-            [InlineKeyboardButton("Go Back", callback_data="back")]
-        ]),
-        parse_mode="Markdown"
-    )
+    await query.edit_message_text("✅ Payment received! Contact support for activation.")
 
 
-# Support Handler
+# Support and Back Handlers
 async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    await query.edit_message_text(
-        text=f"💬 **Contact Support:** {SUPPORT_CONTACT}",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Go Back", callback_data="back")]
-        ]),
-        parse_mode="Markdown"
-    )
+    await update.callback_query.answer()
+    await update.callback_query.edit_message_text(f"💬 **Contact Support:** {SUPPORT_CONTACT}")
 
-
-# Go Back Handler
 async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    await start(query, context)
+    await update.callback_query.answer()
+    await start(update.callback_query, context)
+
+# Run Flask and FastAPI Simultaneously
+if __name__ == "__main__":
+    threading.Thread(target=lambda: flask_app.run(host="0.0.0.0", port=5000)).start()
+    import uvicorn
+    uvicorn.run(fastapi_app, host="0.0.0.0", port=8000)
