@@ -33,6 +33,7 @@ telegram_app = None
 # Flask App for Uptime Monitoring
 flask_app = Flask(__name__)
 
+# Flask Routes for Uptime
 @flask_app.route("/", methods=["GET"])
 def uptime_home():
     """Root route to confirm the bot is live."""
@@ -54,6 +55,12 @@ def flask_uptime():
         "start_time": START_TIME.strftime("%Y-%m-%d %H:%M:%S"),
     }, 200
 
+# Run Flask in a thread
+def run_flask():
+    flask_app.run(host="0.0.0.0", port=8000, use_reloader=False)
+
+Thread(target=run_flask).start()
+
 # FastAPI Uptime Endpoint
 @fastapi_app.api_route("/uptime", methods=["GET", "HEAD"])
 async def fastapi_uptime():
@@ -65,12 +72,6 @@ async def fastapi_uptime():
         "uptime": str(uptime_duration),
         "start_time": START_TIME.strftime("%Y-%m-%d %H:%M:%S")
     })
-
-# Run Flask in a thread
-def run_flask():
-    flask_app.run(host="0.0.0.0", port=8000, use_reloader=False)
-
-Thread(target=run_flask).start()
 
 # Telegram Bot Initialization
 @fastapi_app.on_event("startup")
