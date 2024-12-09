@@ -119,25 +119,42 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = query.from_user.username or "No Username"
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Notify Admin
-    await context.bot.send_message(
-        chat_id=ADMIN_NOTIFICATION,
-        text=(
-            f"📝 **New Payment Initiated**\n"
-            f"👤 User: @{username}\n"
-            f"📋 Plan: {plan_text}\n"
-            f"💳 Method: {method.capitalize()}\n"
-            f"🕒 Time: {current_time}"
-        ),
-        parse_mode="Markdown"
-    )
+   # Replace this with your provided chat ID
+ADMIN_CHAT_ID = 834523364
 
+# Handle Payment Method Selection
+async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    _, method, plan = query.data.split("_")
+    plan_text = "LIFETIME" if plan == "lifetime" else "1 MONTH"
+    username = query.from_user.username or "No Username"
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Notify Admin
+    try:
+        await context.bot.send_message(
+            chat_id=ADMIN_CHAT_ID,  
+            text=(
+                f"📝 **New Payment Initiated**\n"
+                f"👤 User: @{username}\n"
+                f"📋 Plan: {plan_text}\n"
+                f"💳 Method: {method.capitalize()}\n"
+                f"🕒 Time: {current_time}"
+            ),
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        logger.error(f"Error notifying admin: {e}")
+
+    # Payment Details
     if method == "shopify":
         message = (
-            f"💳 **Apple Pay/Google Pay (Instant Access):**\n"
-            "💰 £10.00 GBP for LIFETIME\n"
-            "💰 £6.75 GBP for 1 MONTH\n\n"
-            "Click below to pay instantly.\n\n"
+            f"💳 **Apple Pay/Google Pay (Instant Access):**\n\n"
+            f"💰 £10.00 GBP for LIFETIME\n"
+            f"💰 £6.75 GBP for 1 MONTH\n\n"
+            "Click below to proceed.\n\n"
             "✅ After payment, click 'I've Paid'."
         )
         keyboard = [
