@@ -33,32 +33,33 @@ telegram_app = None
 # Flask App for Uptime Monitoring
 flask_app = Flask(__name__)
 
-# Flask Routes for Uptime
-@flask_app.route("/", methods=["GET"])
-def uptime_home():
-    """Root route to confirm the bot is live."""
-    return Response("Bot is active at root!", status=200)
-
-@flask_app.route("/ping", methods=["GET", "HEAD"])
-def uptime_ping():
-    """Ping Endpoint"""
-    return Response("Bot is active at ping!", status=200)
-
-@flask_app.route("/uptime", methods=["GET", "HEAD"])
-def flask_uptime():
-    """Uptime Check for Flask"""
-    current_time = datetime.now()
-    uptime_duration = current_time - START_TIME
-    return {
-        "status": "online",
-        "uptime": str(uptime_duration),
-        "start_time": START_TIME.strftime("%Y-%m-%d %H:%M:%S"),
-    }, 200
-
-# Run Flask in a thread
+# Flask Thread for Uptime Monitoring
 def run_flask():
+    from flask import Flask, Response
+    flask_app = Flask(__name__)
+
+    @flask_app.route("/", methods=["GET"])
+    def uptime_home():
+        return Response("Bot is active at root!", status=200)
+
+    @flask_app.route("/ping", methods=["GET", "HEAD"])
+    def uptime_ping():
+        return Response("Bot is active at ping!", status=200)
+
+    @flask_app.route("/uptime", methods=["GET", "HEAD"])
+    def flask_uptime():
+        current_time = datetime.now()
+        uptime_duration = current_time - START_TIME
+        return {
+            "status": "online",
+            "uptime": str(uptime_duration),
+            "start_time": START_TIME.strftime("%Y-%m-%d %H:%M:%S"),
+        }, 200
+
     flask_app.run(host="0.0.0.0", port=8000, use_reloader=False)
 
+# Start Flask in a separate thread
+from threading import Thread
 Thread(target=run_flask).start()
 
 # FastAPI Uptime Endpoint
