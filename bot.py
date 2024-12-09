@@ -74,15 +74,17 @@ async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
         [InlineKeyboardButton("Apple Pay/Google Pay (Instant Access)", callback_data=f"payment_shopify_{plan}")],
         [InlineKeyboardButton("Crypto", callback_data=f"payment_crypto_{plan}")],
         [InlineKeyboardButton("PayPal", callback_data=f"payment_paypal_{plan}")],
+        [InlineKeyboardButton("Support", callback_data="support")],
         [InlineKeyboardButton("Go Back", callback_data="back")],
     ]
 
     message = (
         f"📋 You selected the **{plan.replace('_', ' ').upper()}** plan.\n\n"
         "Choose your preferred payment method below:\n"
-        "💳 **Apple Pay/Google Pay:** Instant access. VIP will be emailed instantly.\n"
-        "⚡ **Crypto:** VIP link will be sent within 30 minutes.\n"
-        "📧 **PayPal:** VIP link will be sent within 30 minutes."
+        "💳 **Apple Pay/Google Pay:**\n💰 £10.00 GBP for LIFETIME\n💰 £6.75 GBP for 1 MONTH\n"
+        "✅ Instant access. VIP link will be emailed instantly.\n\n"
+        "⚡ **Crypto:**\nVIP link will be sent within 30 minutes.\n\n"
+        "📧 **PayPal:**\nVIP link will be sent within 30 minutes."
     )
     await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
 
@@ -92,24 +94,29 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    try:
-        _, method, plan = query.data.split("_")
-    except ValueError:
-        await query.edit_message_text("❌ Invalid option. Please try again.", reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton("Go Back", callback_data="back")]]))
-        return
+    _, method, plan = query.data.split("_")
+    common_buttons = [
+        [InlineKeyboardButton("Support", callback_data="support")],
+        [InlineKeyboardButton("Go Back", callback_data="back")],
+    ]
 
     if method == "shopify":
-        message = f"💳 **Apple Pay/Google Pay (Instant Access):**\nClick below to proceed:\n\n" \
-                  "Your VIP link will be emailed to you instantly."
+        message = (
+            "💳 **Apple Pay/Google Pay (Instant Access):**\n\n"
+            "💰 £10.00 GBP for LIFETIME\n"
+            "💰 £6.75 GBP for 1 MONTH\n\n"
+            "Click below to proceed. Your VIP link will be emailed instantly."
+        )
         pay_url = PAYMENT_INFO["shopify"].replace("{plan_type}", plan)
-        keyboard = [[InlineKeyboardButton("Pay Now", web_app=WebAppInfo(url=pay_url))]]
+        keyboard = [[InlineKeyboardButton("Pay Now", web_app=WebAppInfo(url=pay_url))]] + common_buttons
 
     elif method == "crypto":
-        message = f"⚡ **Crypto Payment:**\nSend payment to:\n🔗 `{PAYMENT_INFO['crypto']['eth']}`\n\n" \
-                  "💰 **Prices:**\n- $8 Monthly\n- $15 Lifetime\n\n" \
-                  "✅ Your VIP link will be sent within 30 minutes. Check support for operating times."
-        keyboard = [[InlineKeyboardButton("I've Paid", callback_data="paid")]]
+        message = (
+            f"⚡ **Crypto Payment:**\nSend payment to:\n🔗 `{PAYMENT_INFO['crypto']['eth']}`\n\n"
+            "💰 **Prices:**\n- $8 Monthly\n- $15 Lifetime\n\n"
+            "✅ Your VIP link will be sent within 30 minutes."
+        )
+        keyboard = [[InlineKeyboardButton("I've Paid", callback_data="paid")]] + common_buttons
 
     elif method == "paypal":
         message = (
@@ -120,11 +127,10 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "✅ **MUST BE FRIENDS AND FAMILY**\n"
             "✅ **IF YOU DON'T HAVE FAMILY AND FRIENDS USE CARD/CRYPTO**\n"
             "❌ **DON'T LEAVE A NOTE**\n\n"
-            "✅ Your VIP link will be sent within 30 minutes. Check support for operating times."
+            "✅ Your VIP link will be sent within 30 minutes."
         )
-        keyboard = [[InlineKeyboardButton("I've Paid", callback_data="paid")]]
+        keyboard = [[InlineKeyboardButton("I've Paid", callback_data="paid")]] + common_buttons
 
-    keyboard.append([InlineKeyboardButton("Go Back", callback_data="back")])
     await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
 
@@ -155,7 +161,9 @@ async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await query.edit_message_text(
         text=message,
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Go Back", callback_data="back")]]),
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Go Back", callback_data="back")],
+        ]),
         parse_mode="Markdown"
     )
 
