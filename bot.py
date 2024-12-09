@@ -100,7 +100,8 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         shopify_link = SHOPIFY_LIFETIME_LINK if plan == "lifetime" else SHOPIFY_MONTHLY_LINK
 
 
-Here is the fully updated script with the **"I’ve Paid" button** added to the **Apple Pay/Google Pay mini-apps**. The "I’ve Paid" button only appears after a user clicks on **Lifetime (\u00A310)** or **1 Month (\u00A36.75)** within the Shopify mini-app options.
+# Here is the fully updated script with the "I’ve Paid" button added to the Apple Pay/Google Pay mini-apps.
+# The "I’ve Paid" button only appears after a user clicks on Lifetime (£10) or 1 Month (£6.75) within the Shopify mini-app options.
 
 Additionally:
 - The **admin notification** now includes the **payment method**, time of payment, subscription type, and username.
