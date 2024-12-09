@@ -75,7 +75,7 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     plan = query.data.split("_")[1]
-    header = "🎉 You’ve Chosen LIFETIME Access! 🎉\nJust £10 for unlimited content! Pick your payment method below 💳" if plan == "lifetime" else "🎉 You’ve Chosen 1 MONTH Access! 🎉\nJust £6.75 to start exploring! Pick your payment method below 💳"
+    header = "🎉 You’ve Chosen LIFETIME Access! 🎉\nJust \u00A310.00 for unlimited content! Pick your payment method below 💳" if plan == "lifetime" else "🎉 You’ve Chosen 1 MONTH Access! 🎉\nJust \u00A36.75 to start exploring! Pick your payment method below 💳"
 
     keyboard = [
         [InlineKeyboardButton("🍏 Apple Pay / Google Pay", callback_data=f"payment_shopify_{plan}")],
@@ -106,19 +106,24 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"🛒 Click the button below to pay for **{plan.upper()}** via Apple Pay / Google Pay.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(f"Pay {plan.upper()}", web_app=WebAppInfo(url=shopify_link))],
-                *keyboard
+                [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
+                [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+                [InlineKeyboardButton("❓ Support", callback_data="support")]
             ])
         )
     else:
-        method_text = "PayPal" if method == "paypal" else "Crypto"
-        keyboard = [
-            [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_{method}_{plan}")],
-            [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-            [InlineKeyboardButton("❓ Support", callback_data="support")]
-        ]
+        message = {
+            "crypto": "₿ Pay with Crypto:\nSend payment to:\n- **Ethereum**: `0x123456`\n✅ Click 'I Paid' when done.",
+            "paypal": "💳 PayPal Secure Checkout:\n➡️ Send payment to `onlyvipfan@outlook.com`\n✅ **Friends and Family Only**\n❌ Don’t leave a note!"
+        }
         await query.message.edit_text(
-            f"💳 **{method_text} Checkout**:\nComplete your payment and press **'I’ve Paid'**.",
-            reply_markup=InlineKeyboardMarkup(keyboard)
+            text=message[method],
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_{method}_{plan}")],
+                [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+                [InlineKeyboardButton("❓ Support", callback_data="support")]
+            ]),
+            parse_mode="Markdown"
         )
 
 # Paid Confirmation Handler
@@ -126,32 +131,30 @@ async def handle_paid(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
+    # Extract details
     method, plan = query.data.split("_")[1], query.data.split("_")[2]
     username = query.from_user.username or "Unknown"
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    payment_method = {
-        "shopify": "Apple Pay/Google Pay",
-        "paypal": "PayPal",
-        "crypto": "Crypto"
-    }[method]
+    # Notify admin
     await telegram_app.bot.send_message(
         chat_id=ADMIN_CHAT_ID,
         text=(
             "✅ **Payment Notification**:\n"
             f"🔵 **Username**: @{username}\n"
-            f"💳 **Subscription**: {'LIFETIME (\u00A310.00)' if plan == 'lifetime' else '1 MONTH (\u00A36.75)'}\n"
-            f"💼 **Payment Method**: {payment_method}\n"
-            f"🕒 **Time**: {time}"
+            f"💳 **Subscription**: {plan.upper()} (\u00A3{'10.00' if plan == 'lifetime' else '6.75'})\n"
+            f"🕒 **Time**: {time}\n"
+            f"💼 **Payment Method**: {'Apple Pay/Google Pay' if method == 'shopify' else method.capitalize()}"
         )
     )
 
     await query.message.edit_text(
-        text="✅ **Thank you for your payment!**\n📸 Send a screenshot or transaction ID to @ZakiVip1 for verification.",
+        text="✅ **Thank you for your payment!**\n📸 Please send a screenshot or transaction ID to @ZakiVip1 for verification.",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
             [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
-        ])
+        ]),
+        parse_mode="Markdown"
     )
 
 # Support Handler
