@@ -1,18 +1,20 @@
-from flask import Flask
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-from fastapi import FastAPI, Request
+from flask import Flask
 import logging
 import httpx
+from threading import Thread
 from datetime import datetime
-from fastapi.responses import JSONResponse
-import threading
 
 # Constants
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
+UPTIME_MONITOR_URL = "https://bot-1-f2wh.onrender.com/uptime"
 SUPPORT_CONTACT = "@ZakiVip1"
-ADMIN_CHAT_ID = 834523364  # Replace with the admin's chat ID
+ADMIN_CHAT_ID = 834523364
+START_TIME = datetime.now()
 
 # Payment Information
 PAYMENT_INFO = {
@@ -28,7 +30,6 @@ logger = logging.getLogger("bot")
 # FastAPI App
 fastapi_app = FastAPI()
 telegram_app = None
-START_TIME = datetime.now()
 
 # Flask App for Uptime Monitoring
 flask_app = Flask(__name__)
@@ -43,35 +44,15 @@ def uptime_ping():
     """UptimeRobot Ping Endpoint"""
     return "Bot is active at ping!", 200
 
+# Run Flask in a separate thread
+def run_flask():
+    flask_app.run(host="0.0.0.0", port=8000, use_reloader=False)
 
-@fastapi_app.on_event("startup")
-async def startup_event():
-    global telegram_app
-    telegram_app = Application.builder().token(BOT_TOKEN).build()
-    telegram_app.add_handler(CommandHandler("start", start))
-    telegram_app.add_handler(CallbackQueryHandler(handle_subscription, pattern="select_.*"))
-    telegram_app.add_handler(CallbackQueryHandler(handle_payment, pattern="payment_.*"))
-    telegram_app.add_handler(CallbackQueryHandler(confirm_payment, pattern="paid"))
-    telegram_app.add_handler(CallbackQueryHandler(handle_back, pattern="back"))
-    telegram_app.add_handler(CallbackQueryHandler(handle_support, pattern="support"))
+# Start Flask in a separate thread
+Thread(target=run_flask).start()
 
-    logger.info("Telegram Bot Initialized!")
-
-    await telegram_app.initialize()
-    await telegram_app.bot.delete_webhook()
-    await telegram_app.bot.set_webhook(WEBHOOK_URL)
-    await telegram_app.start()
-
-
-@fastapi_app.post("/webhook")
-async def webhook(request: Request):
-    global telegram_app
-    update = Update.de_json(await request.json(), telegram_app.bot)
-    await telegram_app.process_update(update)
-    return {"status": "ok"}
-
-
-@fastapi_app.get("/uptime")
+# FastAPI Uptime Endpoint
+@fastapi_app.api_route("/uptime", methods=["GET", "HEAD"])
 async def get_uptime():
     current_time = datetime.now()
     uptime_duration = current_time - START_TIME
@@ -81,8 +62,26 @@ async def get_uptime():
         "start_time": START_TIME.strftime("%Y-%m-%d %H:%M:%S")
     })
 
+# Telegram Bot Initialization
+@fastapi_app.on_event("startup")
+async def startup_event():
+    global telegram_app
+    telegram_app = Application.builder().token(BOT_TOKEN).build()
+    telegram_app.add_handler(CommandHandler("start", start))
+    await telegram_app.initialize()
+    await telegram_app.bot.delete_webhook()
+    await telegram_app.bot.set_webhook(WEBHOOK_URL)
+    await telegram_app.start()
+    logger.info("Telegram Bot and FastAPI initialized.")
 
-# Start Command Handler
+@fastapi_app.post("/webhook")
+async def webhook(request: Request):
+    global telegram_app
+    update = Update.de_json(await request.json(), telegram_app.bot)
+    await telegram_app.process_update(update)
+    return {"status": "ok"}
+
+# Telegram Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("1 Month (£6.75)", callback_data="select_1_month")],
