@@ -8,10 +8,10 @@ from datetime import datetime, timedelta
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 SUPPORT_CONTACT = "@ZakiVip1"
-ADMIN_CHAT_ID = 834523364  # Your Chat ID
-SHOPIFY_LIFETIME_LINK = "https://shopify.com/lifetime"  # Replace with your Shopify link
-SHOPIFY_MONTHLY_LINK = "https://shopify.com/monthly"    # Replace with your Shopify link
-LAST_START_NOTIFICATION = {}  # To prevent spamming admin notifications
+ADMIN_CHAT_ID = 834523364  # Admin Chat ID
+SHOPIFY_LIFETIME_LINK = "https://shopify.com/lifetime"  # Replace with actual Shopify link
+SHOPIFY_MONTHLY_LINK = "https://shopify.com/monthly"    # Replace with actual Shopify link
+LAST_START_NOTIFICATION = {}  # Prevent repeated notifications
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -75,7 +75,7 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     plan = query.data.split("_")[1]
-    header = "🎉 You’ve Chosen LIFETIME Access! 🎉\nJust \u00A310.00 for unlimited content! Pick your payment method below 💳" if plan == "lifetime" else "🎉 You’ve Chosen 1 MONTH Access! 🎉\nJust \u00A36.75 to start exploring! Pick your payment method below 💳"
+    header = "🎉 You’ve Chosen LIFETIME Access! 🎉\nJust \u00A310 for unlimited content! Pick your payment method below 💳" if plan == "lifetime" else "🎉 You’ve Chosen 1 MONTH Access! 🎉\nJust \u00A36.75 to start exploring! Pick your payment method below 💳"
 
     keyboard = [
         [InlineKeyboardButton("🍏 Apple Pay / Google Pay", callback_data=f"payment_shopify_{plan}")],
@@ -97,11 +97,6 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if method == "shopify":
         shopify_link = SHOPIFY_LIFETIME_LINK if plan == "lifetime" else SHOPIFY_MONTHLY_LINK
-        keyboard = [
-            [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
-            [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-            [InlineKeyboardButton("❓ Support", callback_data="support")]
-        ]
         await query.message.edit_text(
             text=f"🛒 Click the button below to pay for **{plan.upper()}** via Apple Pay / Google Pay.",
             reply_markup=InlineKeyboardMarkup([
@@ -173,4 +168,7 @@ async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+    await start_callback_query(update, context)
+
+async def start_callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await start(update, context)
