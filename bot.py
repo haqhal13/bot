@@ -18,7 +18,6 @@ logger = logging.getLogger("bot")
 app = FastAPI()
 telegram_app = None
 
-# Startup Event
 @app.on_event("startup")
 async def startup_event():
     global telegram_app
@@ -44,8 +43,8 @@ async def webhook(request: Request):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username or "there"
     keyboard = [
-        [InlineKeyboardButton("1 MONTH", callback_data="select_1_month")],
-        [InlineKeyboardButton("LIFETIME", callback_data="select_lifetime")],
+        [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="select_1_month")],
+        [InlineKeyboardButton("LIFETIME (£10)", callback_data="select_lifetime")],
         [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
     ]
     if update.message:
@@ -93,7 +92,16 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif method == "crypto":
         message = "₿ **Pay with Crypto**:\nSend payment to:\n- **Ethereum**: `0x123abc...`\n- **Bitcoin**: `1abc...`\n\nPress '✅ I’ve Paid' after completing the transaction."
     elif method == "paypal":
-        message = "💳 **PayPal Secure Checkout**:\nSend payment to: `onlyvipfan@outlook.com`\n✅ **Friends and Family** only.\n❌ Don't leave a note!\n\nPress '✅ I’ve Paid' after payment and send a screenshot to @ZakiVip1."
+        message = (
+            "💳 **PayPal Secure Checkout**:\n\n"
+            "💰 **£10.00 - LIFETIME**\n💰 **£6.75 - 1 MONTH**\n\n"
+            "➡️ PayPal: `onlyvipfan@outlook.com`\n"
+            "✅ MUST BE FRIENDS AND FAMILY\n"
+            "✅ IF YOU DON'T HAVE FRIENDS AND FAMILY, USE CARD/CRYPTO\n"
+            "❌ DON'T LEAVE A NOTE\n\n"
+            "➡️ CLICK 'I PAID'\n"
+            "✅ Send payment screenshot to @ZakiVip1 and provide your full PayPal name."
+        )
 
     keyboard = [
         [InlineKeyboardButton("✅ I’ve Paid", callback_data="paid")],
