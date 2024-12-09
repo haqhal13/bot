@@ -26,15 +26,9 @@ logger = logging.getLogger("bot")
 app = FastAPI()
 telegram_app = None
 
-
 @app.get("/", response_class=Response)
 async def root():
     return Response("Bot is active!", status_code=200)
-
-
-@app.api_route("/ping", methods=["GET", "HEAD"])
-async def ping():
-    return Response("Pong!", status_code=200)
 
 
 @app.api_route("/uptime", methods=["GET"])
@@ -87,13 +81,13 @@ async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
     await query.answer()
 
     plan = query.data.split("_")[1]
-    plan_text = "LIFETIME" if plan == "lifetime" else "1 MONTH"
+    plan_text = "LIFETIME (£10.00)" if plan == "lifetime" else "1 MONTH (£6.75)"
     keyboard = [
         [InlineKeyboardButton("Apple Pay/Google Pay", callback_data=f"payment_shopify_{plan}")],
         [InlineKeyboardButton("Crypto", callback_data=f"payment_crypto_{plan}")],
         [InlineKeyboardButton("PayPal", callback_data=f"payment_paypal_{plan}")],
         [InlineKeyboardButton("Support", callback_data="support")],
-        [InlineKeyboardButton("Go Back", callback_data="back")],
+        [InlineKeyboardButton("Back", callback_data="back")],
     ]
 
     message = f"📋 You selected **{plan_text}**.\n\nChoose your payment method:"
@@ -106,17 +100,43 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     method, plan = query.data.split("_")[1], query.data.split("_")[2]
     if method == "shopify":
-        link = PAYMENT_INFO["shopify"].format(plan=plan)
-        message = f"🛒 Click to pay: [Shopify Payment Link]({link})"
+        keyboard = [
+            [InlineKeyboardButton("I've Paid", callback_data="paid")],
+            [InlineKeyboardButton("Back", callback_data="back")],
+            [InlineKeyboardButton("Support", callback_data="support")],
+        ]
+        message = "💰 Use Apple Pay/Google Pay below for:\n\n" \
+                  f"🔹 Lifetime (£10.00) or Monthly (£6.75)\n" \
+                  "➡️ [Click Here to Pay](https://bot-1-f2wh.onrender.com/pay-now/shopify)"
     elif method == "crypto":
-        message = f"🔗 Send payment to this address:\n`{PAYMENT_INFO['crypto']['eth']}`"
+        keyboard = [
+            [InlineKeyboardButton("I've Paid", callback_data="paid")],
+            [InlineKeyboardButton("Back", callback_data="back")],
+            [InlineKeyboardButton("Support", callback_data="support")],
+        ]
+        message = (
+            "💰 Crypto Payment Options:\n"
+            "🔸 **Ethereum (ERC-20):** `0xETH_ADDRESS`\n"
+            "🔸 **Bitcoin (BTC):** `1BitcoinAddressHere`\n"
+            "🔸 **Solana (SOL):** `SOL_ADDRESS`\n\n"
+            "💬 Please send your payment and click 'I've Paid' after completion."
+        )
     elif method == "paypal":
-        message = f"💳 PayPal: {PAYMENT_INFO['paypal']}"
-
+        keyboard = [
+            [InlineKeyboardButton("I've Paid", callback_data="paid")],
+            [InlineKeyboardButton("Back", callback_data="back")],
+            [InlineKeyboardButton("Support", callback_data="support")],
+        ]
+        message = (
+            "💰 PayPal Payment Instructions:\n\n"
+            "🔹 **PayPal:** onlyvipfan@outlook.com\n"
+            "✅ MUST BE 'FRIENDS AND FAMILY'\n"
+            "❌ Don't Leave a Note\n\n"
+            "🔸 After payment, send a screenshot to @ZakiVip1 with your full PayPal name.\n"
+            "➡️ Click 'I've Paid' once done."
+        )
     await query.edit_message_text(
-        text=message, reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Go Back", callback_data="back")],
-        ]), parse_mode="Markdown"
+        text=message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown"
     )
 
 
@@ -127,7 +147,7 @@ async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text(
         text=f"💬 **Contact Support:** {SUPPORT_CONTACT}",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Go Back", callback_data="back")],
+            [InlineKeyboardButton("Back", callback_data="back")],
         ]), parse_mode="Markdown"
     )
 
