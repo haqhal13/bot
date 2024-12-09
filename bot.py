@@ -46,9 +46,8 @@ async def webhook(request: Request):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     username = update.effective_user.username or "Unknown"
-    now = datetime.now()
 
-    # Admin notification limit
+    now = datetime.now()
     if not LAST_START_NOTIFICATION.get(user_id) or now - LAST_START_NOTIFICATION[user_id] > timedelta(minutes=10):
         LAST_START_NOTIFICATION[user_id] = now
         await telegram_app.bot.send_message(
@@ -56,14 +55,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"🟣 **Chat ID**: {user_id}\n🔵 **Username**: @{username}\n🚀 **Started the bot!**"
         )
 
-    # User menu
+    await update.message.reply_text(f"👋 Hey {username}!")
+    keyboard = [
+        [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="select_1_month")],
+        [InlineKeyboardButton("LIFETIME (£10.00)", callback_data="select_lifetime")],
+        [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
+    ]
     await update.message.reply_text(
-        f"👋 Hey {username}!\n\n💎 Choose your subscription plan:",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="select_1_month")],
-            [InlineKeyboardButton("LIFETIME (£10.00)", callback_data="select_lifetime")],
-            [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
-        ])
+        "💎 Welcome to the VIP Bot!\nSelect a subscription plan below or contact support.",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 # Plan Selection Handler
@@ -72,16 +72,16 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     plan = query.data.split("_")[1]
 
-    # Payment method menu
+    keyboard = [
+        [InlineKeyboardButton("🍏 Apple Pay / Google Pay", callback_data=f"payment_shopify_{plan}")],
+        [InlineKeyboardButton("₿ Pay with Crypto", callback_data=f"payment_crypto_{plan}")],
+        [InlineKeyboardButton("💳 PayPal Secure Checkout", callback_data=f"payment_paypal_{plan}")],
+        [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+        [InlineKeyboardButton("❓ Support", callback_data="support")]
+    ]
     await query.message.edit_text(
-        text=f"🎉 You’ve chosen **{'LIFETIME (£10.00)' if plan == 'lifetime' else '1 MONTH (£6.75)'}**!\nSelect your payment method:",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🍏 Apple Pay / Google Pay", callback_data=f"payment_shopify_{plan}")],
-            [InlineKeyboardButton("₿ Pay with Crypto", callback_data=f"payment_crypto_{plan}")],
-            [InlineKeyboardButton("💳 PayPal Secure Checkout", callback_data=f"payment_paypal_{plan}")],
-            [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-            [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
-        ])
+        f"🎉 You’ve chosen **{'LIFETIME (£10.00)' if plan == 'lifetime' else '1 MONTH (£6.75)'}**!\nSelect your payment method:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 # Payment Handler
@@ -93,57 +93,56 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if method == "shopify":
         shopify_link = SHOPIFY_LIFETIME_LINK if plan == "lifetime" else SHOPIFY_MONTHLY_LINK
         await query.message.edit_text(
-            text=f"🛒 Use the button below to pay for **{plan.upper()}** via Apple Pay / Google Pay.",
+            text=f"🛒 Use the button below to pay for **{'LIFETIME (£10.00)' if plan == 'lifetime' else '1 MONTH (£6.75)'}** via Apple Pay / Google Pay.\n\nAfter payment, click **'I’ve Paid'**.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔗 Pay Now", web_app=WebAppInfo(url=shopify_link))],
+                [InlineKeyboardButton("🔗 Pay via Shopify", web_app=WebAppInfo(url=shopify_link))],
                 [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
                 [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-                [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
+                [InlineKeyboardButton("❓ Support", callback_data="support")]
             ])
         )
     else:
-        messages = {
-            "crypto": "₿ **Pay with Crypto**:\n- Send your payment to:\n  **Bitcoin**: `1ABCDEF`\n\n✅ Click 'I’ve Paid' when complete.",
-            "paypal": "💳 **PayPal Secure Checkout**:\n- Send payment to: `onlyvipfan@outlook.com`\n✅ Must be **Friends & Family**\n❌ Don’t leave a note!"
-        }
+        method_text = "PayPal" if method == "paypal" else "Crypto"
         await query.message.edit_text(
-            text=messages[method],
+            text=f"💳 **{method_text} Checkout**:\nComplete your payment and press **'I’ve Paid'**.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_{method}_{plan}")],
                 [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-                [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
-            ]),
-            parse_mode="Markdown"
+                [InlineKeyboardButton("❓ Support", callback_data="support")]
+            ])
         )
 
-# Paid Handler
+# Paid Confirmation Handler
 async def handle_paid(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+
     method, plan = query.data.split("_")[1], query.data.split("_")[2]
     username = query.from_user.username or "Unknown"
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Admin notification
+    payment_method = {
+        "shopify": "Apple Pay/Google Pay",
+        "paypal": "PayPal",
+        "crypto": "Crypto"
+    }[method]
     await telegram_app.bot.send_message(
         chat_id=ADMIN_CHAT_ID,
         text=(
             "✅ **Payment Notification**:\n"
             f"🔵 **Username**: @{username}\n"
-            f"💳 **Subscription**: {plan.upper()} (£{'10.00' if plan == 'lifetime' else '6.75'})\n"
-            f"🕒 **Time**: {time}\n"
-            f"💼 **Payment Method**: {'Apple Pay/Google Pay' if method == 'shopify' else method.capitalize()}"
+            f"💳 **Subscription**: {'LIFETIME (£10.00)' if plan == 'lifetime' else '1 MONTH (£6.75)'}\n"
+            f"💼 **Payment Method**: {payment_method}\n"
+            f"🕒 **Time**: {time}"
         )
     )
 
-    # Confirmation message
     await query.message.edit_text(
         text="✅ **Thank you for your payment!**\n📸 Send a screenshot or transaction ID to @ZakiVip1 for verification.",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
             [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
-        ]),
-        parse_mode="Markdown"
+        ])
     )
 
 # Support Handler
@@ -154,8 +153,7 @@ async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text="💬 **Contact Support**:\nReach out to @ZakiVip1 for assistance.",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
-        ]),
-        parse_mode="Markdown"
+        ])
     )
 
 # Back Handler
