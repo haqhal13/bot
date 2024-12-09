@@ -60,8 +60,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # User start message
     await update.message.reply_text(f"👋 Hey {username}!")
     keyboard = [
-        [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="select_1_month")],
-        [InlineKeyboardButton("LIFETIME (£10.00)", callback_data="select_lifetime")],
+        [InlineKeyboardButton("1 MONTH (\u00A36.75)", callback_data="select_1_month")],
+        [InlineKeyboardButton("LIFETIME (\u00A310.00)", callback_data="select_lifetime")],
         [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
     ]
     await update.message.reply_text(
@@ -75,7 +75,7 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     plan = query.data.split("_")[1]
-    header = "🎉 You’ve Chosen LIFETIME Access! 🎉\nJust £10 for unlimited content! Pick your payment method below 💳" if plan == "lifetime" else "🎉 You’ve Chosen 1 MONTH Access! 🎉\nJust £6.75 to start exploring! Pick your payment method below 💳"
+    header = "🎉 You’ve Chosen LIFETIME Access! 🎉\nJust \u00A310 for unlimited content! Pick your payment method below 💳" if plan == "lifetime" else "🎉 You’ve Chosen 1 MONTH Access! 🎉\nJust \u00A36.75 to start exploring! Pick your payment method below 💳"
 
     keyboard = [
         [InlineKeyboardButton("🍏 Apple Pay / Google Pay", callback_data=f"payment_shopify_{plan}")],
