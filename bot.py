@@ -11,7 +11,7 @@ WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 # Shopify Checkout Links
 SHOPIFY_CART_URLS = {
     "1_month": "https://5fbqad-qz.myshopify.com/cart/123456789:1?checkout",  # Replace with correct 1-month variant ID
-    "lifetime": "https://5fbqad-qz.myshopify.com/cart/9925739086170:1?checkout"  # Lifetime variant ID
+    "lifetime": "https://5fbqad-qz.myshopify.com/cart/50086610207066:1?checkout"  # Lifetime variant ID
 }
 
 # Support Contact
