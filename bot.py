@@ -3,29 +3,18 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 import logging
-import datetime  # For uptime calculation
 
 # Constants
 BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 
-# Payment Links and Info
+# Payment Information
 PAYMENT_INFO = {
     "stripe": "https://your-stripe-payment-link.com",
-    "crypto": {
-        "eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82",
-        "prices": {"1_month": "$8", "lifetime": "$15"},
-    },
-    "paypal": "onlyvipfan@outlook.com"
+    "crypto": {"eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
+    "paypal": "onlyvipfan@outlook.com",
 }
 
-# Shopify Checkout Links
-SHOPIFY_CART_URLS = {
-    "1_month": "https://5fbqad-qz.myshopify.com/cart/123456789:1?checkout",
-    "lifetime": "https://5fbqad-qz.myshopify.com/cart/50086610207066:1?checkout",
-}
-
-# Support Contact
 SUPPORT_CONTACT = "@ZakiVip1"
 
 # Logging Configuration
@@ -34,71 +23,35 @@ logger = logging.getLogger("bot")
 
 # FastAPI App
 app = FastAPI()
-
-# Start time for uptime tracking
-START_TIME = datetime.datetime.now()
-
-# Telegram Bot Application
 telegram_app = None
 
 
 @app.on_event("startup")
 async def startup_event():
     global telegram_app
-    if telegram_app is None:
-        telegram_app = Application.builder().token(BOT_TOKEN).build()
-        telegram_app.add_handler(CommandHandler("start", start))
-        telegram_app.add_handler(CallbackQueryHandler(handle_subscription, pattern="select_.*"))
-        telegram_app.add_handler(CallbackQueryHandler(handle_payment_method, pattern="payment_.*|back"))
-        telegram_app.add_handler(CallbackQueryHandler(confirm_payment, pattern="paid"))
-        await telegram_app.initialize()
-        await telegram_app.bot.delete_webhook()
-        await telegram_app.bot.set_webhook(WEBHOOK_URL)
-        await telegram_app.start()
+    telegram_app = Application.builder().token(BOT_TOKEN).build()
+    telegram_app.add_handler(CommandHandler("start", start))
+    telegram_app.add_handler(CallbackQueryHandler(handle_subscription, pattern="select_.*"))
+    telegram_app.add_handler(CallbackQueryHandler(handle_payment, pattern="payment_.*"))
+    telegram_app.add_handler(CallbackQueryHandler(confirm_payment, pattern="paid"))
+    telegram_app.add_handler(CallbackQueryHandler(handle_back, pattern="back"))
+    telegram_app.add_handler(CallbackQueryHandler(handle_support, pattern="support"))
+
+    await telegram_app.initialize()
+    await telegram_app.bot.delete_webhook()
+    await telegram_app.bot.set_webhook(WEBHOOK_URL)
+    await telegram_app.start()
 
 
 @app.post("/webhook")
 async def webhook(request: Request):
     global telegram_app
-    if not telegram_app:
-        return {"status": "error", "message": "Application not initialized"}
-    try:
-        update_json = await request.json()
-        update = Update.de_json(update_json, telegram_app.bot)
-        await telegram_app.process_update(update)
-        return {"status": "ok"}
-    except Exception as e:
-        logger.exception(f"Error processing webhook: {e}")
-        return {"status": "error", "message": str(e)}
+    update = Update.de_json(await request.json(), telegram_app.bot)
+    await telegram_app.process_update(update)
+    return {"status": "ok"}
 
 
-@app.get("/pay-now/{plan_type}")
-async def pay_now_page(plan_type: str):
-    if plan_type not in SHOPIFY_CART_URLS:
-        return HTMLResponse("<h1>Invalid Plan</h1>", status_code=400)
-    return HTMLResponse(
-        f"""
-        <html>
-        <head>
-            <title>Redirecting...</title>
-            <meta http-equiv="refresh" content="0;url={SHOPIFY_CART_URLS[plan_type]}" />
-        </head>
-        <body>
-            Redirecting to Shopify checkout...
-            <a href="{SHOPIFY_CART_URLS[plan_type]}">Click here if not redirected</a>
-        </body>
-        </html>
-        """
-    )
-
-
-@app.get("/uptime")
-async def uptime():
-    current_time = datetime.datetime.now()
-    uptime_duration = current_time - START_TIME
-    return {"status": "ok", "uptime": str(uptime_duration)}
-
-
+# Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("1 Month (£6.75)", callback_data="select_1_month")],
@@ -111,67 +64,95 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+# Handle Subscription Plan Selection
 async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     plan = query.data.split("_")[1]
-    message = (
-        f"📋 You selected the **{plan.replace('_', ' ').upper()}** plan.\n\n"
-        "Choose your preferred payment method below:\n\n"
-        "💳 **Stripe (Apple Pay/Google Pay):** Instant access.\n"
-        "⚡ **Crypto:** Manual processing.\n"
-        "📧 **PayPal:** Manual processing."
-    )
-
     keyboard = [
         [InlineKeyboardButton("Stripe (Instant Access)", callback_data=f"payment_stripe_{plan}")],
         [InlineKeyboardButton("Crypto", callback_data=f"payment_crypto_{plan}")],
         [InlineKeyboardButton("PayPal", callback_data=f"payment_paypal_{plan}")],
         [InlineKeyboardButton("Go Back", callback_data="back")],
     ]
+
+    message = (
+        f"📋 You selected the **{plan.replace('_', ' ').upper()}** plan.\n\n"
+        "Choose your preferred payment method below:\n"
+        "💳 **Stripe (Apple Pay/Google Pay):** Instant access.\n"
+        "⚡ **Crypto:** Manual processing.\n"
+        "📧 **PayPal:** Manual processing."
+    )
     await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
 
 
-async def handle_payment_method(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# Handle Payment Method Selection
+async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    _, method, plan = query.data.split("_")
+    try:
+        _, method, plan = query.data.split("_")
+    except ValueError:
+        await query.edit_message_text("❌ Invalid option. Please try again.", reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Go Back", callback_data="back")]]))
+        return
 
     if method == "stripe":
         message = f"💳 **Stripe Payment (Instant Access):**\n[Pay Now]({PAYMENT_INFO['stripe']})\n\n" \
                   "After payment, click **'I've Paid'**."
-        keyboard = [[InlineKeyboardButton("I've Paid", callback_data="paid")],
-                    [InlineKeyboardButton("Go Back", callback_data="back")]]
     elif method == "crypto":
-        message = f"⚡ **Crypto Payment:**\nSend your payment to:\n" \
-                  f"🔗 Ethereum: `{PAYMENT_INFO['crypto']['eth']}`\n\n" \
-                  f"💰 **Prices:**\n- {PAYMENT_INFO['crypto']['prices']['1_month']} Monthly\n" \
-                  f"- {PAYMENT_INFO['crypto']['prices']['lifetime']} Lifetime\n\n" \
-                  "After payment, click **'I've Paid'**."
-        keyboard = [[InlineKeyboardButton("I've Paid", callback_data="paid")],
-                    [InlineKeyboardButton("Go Back", callback_data="back")]]
+        message = f"⚡ **Crypto Payment:**\nSend payment to:\n🔗 `{PAYMENT_INFO['crypto']['eth']}`\n\n" \
+                  "💰 **Prices:**\n- $8 Monthly\n- $15 Lifetime\n\nAfter payment, click **'I've Paid'**."
     elif method == "paypal":
-        message = f"📧 **PayPal Payment:**\nSend payment to: `{PAYMENT_INFO['paypal']}`\n\n" \
-                  "After payment, click **'I've Paid'**."
-        keyboard = [[InlineKeyboardButton("I've Paid", callback_data="paid")],
-                    [InlineKeyboardButton("Go Back", callback_data="back")]]
+        message = (
+            "💰 **PayPal Payment:**\n\n"
+            "💰 £10.00 GBP for LIFETIME\n"
+            "💰 £6.75 GBP for 1 MONTH\n\n"
+            f"➡️ PayPal: `{PAYMENT_INFO['paypal']}`\n\n"
+            "✅ **MUST BE FRIENDS AND FAMILY**\n"
+            "✅ **IF YOU DON'T HAVE FAMILY AND FRIENDS USE CARD/CRYPTO**\n"
+            "❌ **DON'T LEAVE A NOTE**\n\n"
+            "➡️ Click 'I Paid'\n"
+            f"✅ Send payment screenshot to {SUPPORT_CONTACT} and provide your full PayPal name."
+        )
 
+    keyboard = [
+        [InlineKeyboardButton("I've Paid", callback_data="paid")],
+        [InlineKeyboardButton("Go Back", callback_data="back")],
+    ]
     await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
 
+# Confirm Payment
 async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+    await query.edit_message_text(
+        text="✅ Thank you for your payment! Please send a screenshot or transaction ID for verification to "
+             f"{SUPPORT_CONTACT}.",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Support", callback_data="support")],
+            [InlineKeyboardButton("Go Back", callback_data="back")],
+        ])
+    )
 
-    message = f"✅ Thank you for your payment! Please send a screenshot or transaction ID for verification.\n\n" \
-              f"💬 Need help? Contact: {SUPPORT_CONTACT}"
-    keyboard = [[InlineKeyboardButton("Support", callback_data="support")],
-                [InlineKeyboardButton("Go Back", callback_data="back")]]
 
-    await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
+# Handle Support Button
+async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await query.edit_message_text(
+        text=f"💬 **Support Contact:** {SUPPORT_CONTACT}\n\nPlease reach out if you need assistance!",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Go Back", callback_data="back")]
+        ])
+    )
 
 
-async def back(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await start(update.callback_query, context)
+# Go Back to Main Menu
+async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await start(query, context)
