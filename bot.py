@@ -81,34 +81,56 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     await query.message.edit_text(header, reply_markup=InlineKeyboardMarkup(keyboard))
 
-# Payment Handler
+# Updated Payment Handler with Mini Apps for Apple Pay / Google Pay
 async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     method, plan = query.data.split("_")[1], query.data.split("_")[2]
 
     if method == "shopify":
-        message = "✅ **Apple Pay / Google Pay**:\nClick to pay: [Pay Now](https://bot-1-f2wh.onrender.com/pay-now/{})\n\nPress '✅ I’ve Paid' after completing the payment.".format(plan)
+        message = "🍏 **Apple Pay / Google Pay**\n\nSelect your plan below:"
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "💎 Lifetime (£10)", 
+                    web_app=WebAppInfo(url="SHOPIFY_LIFETIME_LINK")  # Replace with actual Shopify link
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "📅 1 Month (£6.75)", 
+                    web_app=WebAppInfo(url="SHOPIFY_MONTHLY_LINK")  # Replace with actual Shopify link
+                )
+            ],
+            [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+            [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
+        ]
     elif method == "crypto":
         message = "₿ **Pay with Crypto**:\nSend payment to:\n- **Ethereum**: `0x123abc...`\n- **Bitcoin**: `1abc...`\n\nPress '✅ I’ve Paid' after completing the transaction."
+        keyboard = [
+            [InlineKeyboardButton("✅ I’ve Paid", callback_data="paid")],
+            [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+            [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
+        ]
     elif method == "paypal":
         message = (
             "💳 **PayPal Secure Checkout**:\n\n"
             "💰 **£10.00 - LIFETIME**\n💰 **£6.75 - 1 MONTH**\n\n"
             "➡️ PayPal: `onlyvipfan@outlook.com`\n"
             "✅ MUST BE FRIENDS AND FAMILY\n"
-            "✅ IF YOU DON'T HAVE FRIENDS AND FAMILY, USE CARD/CRYPTO\n"
             "❌ DON'T LEAVE A NOTE\n\n"
             "➡️ CLICK 'I PAID'\n"
             "✅ Send payment screenshot to @ZakiVip1 and provide your full PayPal name."
         )
+        keyboard = [
+            [InlineKeyboardButton("✅ I’ve Paid", callback_data="paid")],
+            [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+            [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
+        ]
 
-    keyboard = [
-        [InlineKeyboardButton("✅ I’ve Paid", callback_data="paid")],
-        [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-        [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
-    ]
-    await query.message.edit_text(message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+    await query.message.edit_text(
+        text=message, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown"
+    )
 
 # Paid Confirmation Handler
 async def handle_paid(update: Update, context: ContextTypes.DEFAULT_TYPE):
