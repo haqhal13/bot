@@ -107,7 +107,10 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # --- 
 # Full Corrected Script
 
-```python
+After:
+#python
+# Example of fixed code
+print("Hello World")
 from fastapi import FastAPI, Request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
