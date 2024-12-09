@@ -107,7 +107,7 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # --- 
 # Full Corrected Script
 
-After:
+# After:
 #python
 # Example of fixed code
 print("Hello World")
