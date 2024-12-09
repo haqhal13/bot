@@ -31,16 +31,19 @@ telegram_app = None
 @app.get("/", response_class=Response)
 async def root():
     """Root route to confirm bot is live."""
+    logger.info("Root route pinged!")
     return Response("Bot is active at root!", status_code=200)
 
 @app.api_route("/ping", methods=["GET", "HEAD"])
 async def ping():
     """Ping endpoint for UptimeRobot."""
+    logger.info("Ping route checked!")
     return Response("Bot is active at ping!", status_code=200)
 
 @app.api_route("/uptime", methods=["GET", "HEAD"])
 async def uptime():
     """Uptime Check for FastAPI."""
+    logger.info("Uptime check triggered!")
     current_time = datetime.now()
     uptime_duration = current_time - START_TIME
     return JSONResponse(content={
@@ -53,27 +56,47 @@ async def uptime():
 @app.on_event("startup")
 async def startup_event():
     global telegram_app
+    logger.info("Initializing Telegram bot...")
     telegram_app = Application.builder().token(BOT_TOKEN).build()
+
+    # Handlers
     telegram_app.add_handler(CommandHandler("start", start))
     telegram_app.add_handler(CallbackQueryHandler(handle_subscription, pattern="select_.*"))
     telegram_app.add_handler(CallbackQueryHandler(handle_support, pattern="support"))
     telegram_app.add_handler(CallbackQueryHandler(handle_back, pattern="back"))
+
     await telegram_app.initialize()
+    logger.info("Deleting any existing webhooks...")
     await telegram_app.bot.delete_webhook()
-    await telegram_app.bot.set_webhook(WEBHOOK_URL)
+
+    logger.info(f"Setting new webhook: {WEBHOOK_URL}")
+    success = await telegram_app.bot.set_webhook(WEBHOOK_URL)
+    if success:
+        logger.info("Webhook set successfully!")
+    else:
+        logger.error("Failed to set webhook!")
+
     await telegram_app.start()
-    logger.info("Telegram Bot and FastAPI initialized.")
+    logger.info("Telegram Bot and FastAPI initialized successfully.")
 
 @app.post("/webhook")
 async def webhook(request: Request):
     """Handle Telegram updates."""
     global telegram_app
-    update = Update.de_json(await request.json(), telegram_app.bot)
-    await telegram_app.process_update(update)
-    return {"status": "ok"}
+    try:
+        update_data = await request.json()
+        logger.debug(f"Received webhook update: {update_data}")
+        update = Update.de_json(update_data, telegram_app.bot)
+        await telegram_app.process_update(update)
+        logger.info("Update processed successfully.")
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"Error processing webhook: {e}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Telegram Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"Start command triggered by {update.effective_user.username}")
     keyboard = [
         [InlineKeyboardButton("1 Month (£6.75)", callback_data="select_1_month")],
         [InlineKeyboardButton("Lifetime (£10.00)", callback_data="select_lifetime")],
@@ -86,6 +109,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    logger.info(f"Subscription callback received: {query.data}")
     await query.answer()
 
     plan = query.data.split("_")[1]
@@ -108,14 +132,17 @@ async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
     await query.edit_message_text(text=message, reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info("Support callback triggered.")
     await update.callback_query.answer()
     await update.callback_query.edit_message_text(f"💬 **Contact Support:** {SUPPORT_CONTACT}")
 
 async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info("Back callback triggered.")
     await update.callback_query.answer()
     await start(update.callback_query, context)
 
 # Run FastAPI
 if __name__ == "__main__":
     import uvicorn
+    logger.info("Starting FastAPI application...")
     uvicorn.run(app, host="0.0.0.0", port=5000)
