@@ -104,11 +104,8 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # The "I’ve Paid" button only appears after a user clicks on Lifetime (£10) or 1 Month (£6.75) within the Shopify mini-app options.
 
 # Additionally:
-# The admin notification now includes the payment method, ...
-
----
-
-### Full Corrected Script
+# --- 
+# Full Corrected Script
 
 ```python
 from fastapi import FastAPI, Request
