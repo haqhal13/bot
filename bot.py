@@ -204,14 +204,13 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     method, plan = query.data.split("_")[1], query.data.split("_")[2]
 
-    if method == "shopify":
-        shopify_link = SHOPIFY_LIFETIME_LINK if plan == "lifetime" else SHOPIFY_MONTHLY_LINK
-        keyboard = [
-            [InlineKeyboardButton("📱 Pay 1", web_app=WebAppInfo(url=shopify_link))],
-            [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
-            [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-            [InlineKeyboardButton("❓ Support", callback_data="support")]
-        ]
+keyboard = [
+    [InlineKeyboardButton("📱 Pay 1", web_app=WebAppInfo(url=shopify_link))],
+    [InlineKeyboardButton("📱 Pay 2", web_app=WebAppInfo(url=shopify_link))],
+    [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
+    [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+    [InlineKeyboardButton("❓ Support", callback_data="support")]
+]
         await query.message.edit_text(
             text=(
                 "💎 **Choose your subscription below using Apple Pay / Google Pay** 💎\n"
