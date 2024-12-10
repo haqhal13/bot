@@ -319,8 +319,8 @@ async def startup_event():
 async def root():
     return {"status": "OK", "message": "Welcome to the Telegram Bot API"}
 
-# Ensure /uptime exists
-@app.get("/uptime")
+# Uptime Route
+@app.api_route("/uptime", methods=["GET", "HEAD"])
 async def uptime():
     return {"status": "OK", "message": "Service is running"}
 
