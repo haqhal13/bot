@@ -282,6 +282,12 @@ async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
+# Back Handler
+async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await start_callback_query(update, context)
+
 async def start_callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="select_1_month")],
@@ -295,3 +301,19 @@ async def start_callback_query(update: Update, context: ContextTypes.DEFAULT_TYP
         text="💎 Welcome back! Please select a subscription plan:",
         reply_markup=reply_markup
     )
+
+# Startup Event
+@app.on_event("startup")
+async def startup_event():
+    global telegram_app
+    telegram_app = Application.builder().token(BOT_TOKEN).build()
+    telegram_app.add_handler(CommandHandler("start", start))
+    telegram_app.add_handler(CallbackQueryHandler(handle_selection, pattern="select_.*"))
+    telegram_app.add_handler(CallbackQueryHandler(handle_payment, pattern="payment_.*"))
+    telegram_app.add_handler(CallbackQueryHandler(handle_paid, pattern="paid_.*"))
+    telegram_app.add_handler(CallbackQueryHandler(handle_support, pattern="support"))
+    telegram_app.add_handler(CallbackQueryHandler(handle_back, pattern="back"))  # No error now
+    await telegram_app.initialize()
+    await telegram_app.bot.set_webhook(WEBHOOK_URL)
+    await telegram_app.start()
+    logger.info("Telegram bot started successfully.")
