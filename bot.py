@@ -207,31 +207,41 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if method == "shopify":
         shopify_link = SHOPIFY_LIFETIME_LINK if plan == "lifetime" else SHOPIFY_MONTHLY_LINK
         keyboard = [
+            [InlineKeyboardButton("📱 Pay 1", web_app=WebAppInfo(url=shopify_link))],
             [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
             [InlineKeyboardButton("❓ Support", callback_data="support")]
         ]
         await query.message.edit_text(
-            text=f"🛒 Click the button below to pay for **{plan.upper()}** via Apple Pay / Google Pay.",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(f"Pay {plan.upper()}", web_app=WebAppInfo(url=shopify_link))],
-                [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
-                [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-                [InlineKeyboardButton("❓ Support", callback_data="support")]
-            ])
+            text=(
+                "💎 **Choose your subscription below using Apple Pay / Google Pay** 💎\n"
+                "📧 **Your VIP link will be sent to your email instantly!** 🚀\n\n"
+                "✨ **Enjoy exclusive access now!** 🎉"
+            ),
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="Markdown"
         )
     else:
         message = {
-            "crypto": "₿ Pay with Crypto:\nSend payment to:\n- **Ethereum**: `0x123456`\n✅ Click 'I Paid' when done.",
-            "paypal": "💳 PayPal Secure Checkout:\n➡️ Send payment to `onlyvipfan@outlook.com`\n✅ **Friends and Family Only**\n❌ Don’t leave a note!"
+            "crypto": (
+                "₿ **Pay with Crypto**:\n"
+                "Send payment to:\n- **Ethereum**: `0x123456`\n✅ Click 'I Paid' when done."
+            ),
+            "paypal": (
+                "💳 **PayPal Secure Checkout**:\n"
+                "➡️ Send payment to `onlyvipfan@outlook.com`\n✅ **Friends and Family Only**\n❌ Don’t leave a note!"
+            )
         }
+     keyboard = [
+    [InlineKeyboardButton("📱 Pay 1", web_app=WebAppInfo(url=SHOPIFY_MONTHLY_LINK))],
+    [InlineKeyboardButton("📱 Pay 2", web_app=WebAppInfo(url=SHOPIFY_LIFETIME_LINK))],
+    [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
+    [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+    [InlineKeyboardButton("❓ Support", callback_data="support")]
+]
         await query.message.edit_text(
             text=message[method],
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_{method}_{plan}")],
-                [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-                [InlineKeyboardButton("❓ Support", callback_data="support")]
-            ]),
+            reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode="Markdown"
         )
 
