@@ -36,7 +36,17 @@ async def startup_event():
     await telegram_app.bot.set_webhook(WEBHOOK_URL)
     await telegram_app.start()
     logger.info("Telegram bot started successfully.")
+    
+@app.get("/uptime")
+async def uptime():
+    return {"status": "OK", "message": "Service is running"}
 
+@app.post("/webhook")
+async def webhook(request: Request):
+    update = Update.de_json(await request.json(), telegram_app.bot)
+    await telegram_app.process_update(update)
+    return {"status": "ok"}
+    
 @app.post("/webhook")
 async def webhook(request: Request):
     update = Update.de_json(await request.json(), telegram_app.bot)
