@@ -314,6 +314,16 @@ async def startup_event():
     await telegram_app.start()
     logger.info("Telegram bot started successfully.")
 
+# Root Route
+@app.get("/")
+async def root():
+    return {"status": "OK", "message": "Welcome to the Telegram Bot API"}
+
+# Ensure /uptime exists
+@app.get("/uptime")
+async def uptime():
+    return {"status": "OK", "message": "Service is running"}
+
 if __name__ == "__main__":
     import os
     import uvicorn
