@@ -282,12 +282,16 @@ async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-# Back Handler
-async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    await start_callback_query(update, context)
-
 async def start_callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton
+        [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="select_1_month")],
+        [InlineKeyboardButton("LIFETIME (£10.00)", callback_data="select_lifetime")],
+        [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.callback_query.message.edit_text(
+        text="💎 Welcome back! Please select a subscription plan:",
+        reply_markup=reply_markup
+    )
