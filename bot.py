@@ -46,12 +46,6 @@ async def webhook(request: Request):
     update = Update.de_json(await request.json(), telegram_app.bot)
     await telegram_app.process_update(update)
     return {"status": "ok"}
-    
-@app.post("/webhook")
-async def webhook(request: Request):
-    update = Update.de_json(await request.json(), telegram_app.bot)
-    await telegram_app.process_update(update)
-    return {"status": "ok"}
 
 # Start Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -113,14 +107,6 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Here is the fully updated script with the "I’ve Paid" button added to the Apple Pay/Google Pay mini-apps.
 # The "I’ve Paid" button only appears after a user clicks on Lifetime (£10) or 1 Month (£6.75) within the Shopify mini-app options.
 
-# Additionally:
-# --- 
-# Full Corrected Script
-
-# After:
-#python
-# Example of fixed code
-print("Hello World")
 from fastapi import FastAPI, Request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
