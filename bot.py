@@ -102,10 +102,36 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if method == "shopify":
         shopify_link = SHOPIFY_LIFETIME_LINK if plan == "lifetime" else SHOPIFY_MONTHLY_LINK
-
-
-# Here is the fully updated script with the "I’ve Paid" button added to the Apple Pay/Google Pay mini-apps.
-# The "I’ve Paid" button only appears after a user clicks on Lifetime (£10) or 1 Month (£6.75) within the Shopify mini-app options.
+        keyboard = [
+            [InlineKeyboardButton("📱 Pay 1", web_app=WebAppInfo(url=shopify_link))],
+            [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
+            [InlineKeyboardButton("↩️ Go Back", callback_data="back")],
+            [InlineKeyboardButton("❓ Support", callback_data="support")],
+        ]
+        await query.message.edit_text(
+            text=(
+                "💳 **Choose your subscription below using Apple Pay / Google Pay** 🛒\n"
+                "✨ **Your VIP link will be sent to your email instantly!** 🚀\n"
+                "✨ **Enjoy exclusive access now!** 🎉"
+            ),
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="Markdown"
+        )
+    else:
+        message = {
+            "crypto": (
+                "🪙 **Pay with Crypto**:\n"
+                "Send payment to:\n- **Ethereum**: `0x123456`\n✅ Click 'I Paid' when done."
+            ),
+            "paypal": (
+                "💳 **PayPal Secure Checkout**:\n"
+                "📧 Send payment to `onlyvipfan@outlook.com`\n✅ **Friends and Family Only**❌ Don’t leave notes."
+            ),
+        }
+        await query.message.edit_text(
+            text=message[method],
+            parse_mode="Markdown"
+        )
 
 from fastapi import FastAPI, Request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
