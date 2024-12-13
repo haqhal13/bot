@@ -218,3 +218,8 @@ async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     await start(query, context)
+
+# UPTIME
+@app.head("/uptime")
+async def head_uptime():
+    return Response(status_code=200)
