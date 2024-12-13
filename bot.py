@@ -131,57 +131,55 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["plan_text"] = plan_text
     context.user_data["method"] = method
 
-  # Payment Details
-if method == "shopify":
-    message = (
-        "🚀 **Instant Access with Apple Pay/Google Pay!**\n\n"
-        "🎁 **Choose Your VIP Plan:**\n"
-        "💎 Lifetime Access: **£10.00 GBP** 🎉\n"
-        "⏳ 1 Month Access: **£6.75 GBP** 🌟\n\n"
-        "🛒 Click below to pay securely and get **INSTANT VIP access** delivered to your email! 📧\n\n"
-        "✅ After payment, click 'I've Paid' to confirm."
-    )
-    keyboard = [
-        [InlineKeyboardButton("💎 Lifetime (£10.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"].replace("{plan_type}", "lifetime")))],
-        [InlineKeyboardButton("⏳ 1 Month (£6.75)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"].replace("{plan_type}", "1_month")))],
-        [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
-    ]
+    # Payment Details
+    if method == "shopify":
+        message = (
+            "🚀 **Instant Access with Apple Pay/Google Pay!**\n\n"
+            "🎁 **Choose Your VIP Plan:**\n"
+            "💎 Lifetime Access: **£10.00 GBP** 🎉\n"
+            "⏳ 1 Month Access: **£6.75 GBP** 🌟\n\n"
+            "🛒 Click below to pay securely and get **INSTANT VIP access** delivered to your email! 📧\n\n"
+            "✅ After payment, click 'I've Paid' to confirm."
+        )
+        keyboard = [
+            [InlineKeyboardButton("💎 Lifetime (£10.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"].replace("{plan_type}", "lifetime")))],
+            [InlineKeyboardButton("⏳ 1 Month (£6.75)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"].replace("{plan_type}", "1_month")))],
+            [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
+        ]
     elif method == "crypto":
-    message = (
-        "⚡ **Pay Securely with Crypto!**\n\n"
-        "🔗 **Send Your Payment To:**\n"
-        f"`{PAYMENT_INFO['crypto']['eth']}`\n\n"
-        "💎 **Choose Your Plan:**\n"
-        "⏳ 1 Month Access: **$8 USD** 🌟\n"
-        "💎 Lifetime Access: **$15 USD** 🎉\n\n"
-        "✅ Once you've sent the payment, click 'I've Paid' to confirm.\n"
-        "📨 Your VIP link will be sent to you manually. Thank you! 💖"
-    )
-    keyboard = [
-        [InlineKeyboardButton("✅ I've Paid", callback_data="paid")]
-    ]
- elif method == "paypal":
-    message = (
-        "💸 **Easy Payment with PayPal!**\n\n"
-        "➡️ **Send Payment To:**\n"
-        f"`{PAYMENT_INFO['paypal']}`\n\n"
-        "💎 **Choose Your Plan:**\n"
-        "⏳ 1 Month Access: **£6.75 GBP** 🌟\n"
-        "💎 Lifetime Access: **£10.00 GBP** 🎉\n\n"
-        "⚠️ **Important:**\n"
-        "✅ Send as **Friends and Family**.\n"
-        "❌ *Do NOT leave a note.*\n\n"
-        "✅ Once payment is complete, click 'I've Paid' to confirm.\n"
-        "📨 Your VIP link will be sent manually. Thank you! 💖"
-    )
-    keyboard = [
-        [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
-        [InlineKeyboardButton("💬 Support", callback_data="support")],
-        [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
-    ]
+        message = (
+            "⚡ **Pay Securely with Crypto!**\n\n"
+            "🔗 **Send Your Payment To:**\n"
+            f"`{PAYMENT_INFO['crypto']['eth']}`\n\n"
+            "💎 **Choose Your Plan:**\n"
+            "⏳ 1 Month Access: **$8 USD** 🌟\n"
+            "💎 Lifetime Access: **$15 USD** 🎉\n\n"
+            "✅ Once you've sent the payment, click 'I've Paid' to confirm.\n"
+            "📨 Your VIP link will be sent to you manually. Thank you! 💖"
+        )
+        keyboard = [[InlineKeyboardButton("✅ I've Paid", callback_data="paid")]]
+    elif method == "paypal":
+        message = (
+            "💸 **Easy Payment with PayPal!**\n\n"
+            "➡️ **Send Payment To:**\n"
+            f"`{PAYMENT_INFO['paypal']}`\n\n"
+            "💎 **Choose Your Plan:**\n"
+            "⏳ 1 Month Access: **£6.75 GBP** 🌟\n"
+            "💎 Lifetime Access: **£10.00 GBP** 🎉\n\n"
+            "⚠️ **Important:**\n"
+            "✅ Send as **Friends and Family**.\n"
+            "❌ *Do NOT leave a note.*\n\n"
+            "✅ Once payment is complete, click 'I've Paid' to confirm.\n"
+            "📨 Your VIP link will be sent manually. Thank you! 💖"
+        )
+        keyboard = [
+            [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
+            [InlineKeyboardButton("💬 Support", callback_data="support")],
+            [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+        ]
     await query.edit_message_text(
-        text=message, 
-        reply_markup=InlineKeyboardMarkup(keyboard), 
+        text=message,
+        reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="Markdown"
     )
 
