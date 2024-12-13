@@ -99,8 +99,8 @@ async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
     plan_text = "LIFETIME" if plan == "lifetime" else "1 MONTH"
     keyboard = [
         [InlineKeyboardButton("💳 Apple Pay/Google Pay 🚀 (Instant Access)", callback_data=f"payment_shopify_{plan}")],
-        [InlineKeyboardButton("⚡ Crypto ⏳ (Secure Payment)", callback_data=f"payment_crypto_{plan}")],
-        [InlineKeyboardButton("📧 PayPal 💌 (Easy & Quick)", callback_data=f"payment_paypal_{plan}")],
+        [InlineKeyboardButton("⚡ Crypto ⏳ (30 min wait time)", callback_data=f"payment_crypto_{plan}")],
+        [InlineKeyboardButton("📧 PayPal 💌 (30 min wait time)", callback_data=f"payment_paypal_{plan}")],
         [InlineKeyboardButton("💬 Support", callback_data="support")],
         [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
     ]
@@ -108,8 +108,8 @@ async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
     message = (
         f"⭐ You have chosen the **{plan_text}** plan.\n\n"
         "💳 **Apple Pay/Google Pay:** 🚀 Instant VIP access (link emailed immediately).\n"
-        "⚡ **Crypto:** ⏳ Secure payment, VIP link sent manually.\n"
-        "📧 **PayPal:** 💌 Easy and quick, VIP link sent manually.\n\n"
+        "⚡ **Crypto:** (30 min wait time), VIP link sent manually.\n"
+        "📧 **PayPal:**(30 min wait time), VIP link sent manually.\n\n"
         "🎉 Choose your preferred payment method below and get access today!"
     )
     await query.edit_message_text(
