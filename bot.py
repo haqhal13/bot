@@ -237,7 +237,7 @@ keyboard = [
     [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
     [InlineKeyboardButton("❓ Support", callback_data="support")]
 ]
-await query.message.edit_text(
+        await query.message.edit_text(
             text=(
                 "💎 **Choose your subscription below using Apple Pay / Google Pay** 💎\n"
                 "📧 **Your VIP link will be sent to your email instantly!** 🚀\n\n"
