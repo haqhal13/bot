@@ -219,6 +219,8 @@ async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     await start(query, context)
 
+from fastapi import Response
+
 # UPTIME
 @app.head("/uptime")
 async def head_uptime():
