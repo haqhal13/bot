@@ -36,10 +36,6 @@ async def startup_event():
     await telegram_app.bot.set_webhook(WEBHOOK_URL)
     await telegram_app.start()
     logger.info("Telegram bot started successfully.")
-    
-@app.get("/uptime")
-async def uptime():
-    return {"status": "OK", "message": "Service is running"}
 
 @app.post("/webhook")
 async def webhook(request: Request):
@@ -102,37 +98,19 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if method == "shopify":
         shopify_link = SHOPIFY_LIFETIME_LINK if plan == "lifetime" else SHOPIFY_MONTHLY_LINK
-        keyboard = [
-            [InlineKeyboardButton("📱 Pay 1", web_app=WebAppInfo(url=shopify_link))],
-            [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
-            [InlineKeyboardButton("↩️ Go Back", callback_data="back")],
-            [InlineKeyboardButton("❓ Support", callback_data="support")],
-        ]
-        await query.message.edit_text(
-            text=(
-                "💳 **Choose your subscription below using Apple Pay / Google Pay** 🛒\n"
-                "✨ **Your VIP link will be sent to your email instantly!** 🚀\n"
-                "✨ **Enjoy exclusive access now!** 🎉"
-            ),
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="Markdown"
-        )
-    else:
-        message = {
-            "crypto": (
-                "🪙 **Pay with Crypto**:\n"
-                "Send payment to:\n- **Ethereum**: `0x123456`\n✅ Click 'I Paid' when done."
-            ),
-            "paypal": (
-                "💳 **PayPal Secure Checkout**:\n"
-                "📧 Send payment to `onlyvipfan@outlook.com`\n✅ **Friends and Family Only**❌ Don’t leave notes."
-            ),
-        }
-        await query.message.edit_text(
-            text=message[method],
-            parse_mode="Markdown"
-        )
 
+
+# Here is the fully updated script with the "I’ve Paid" button added to the Apple Pay/Google Pay mini-apps.
+# The "I’ve Paid" button only appears after a user clicks on Lifetime (£10) or 1 Month (£6.75) within the Shopify mini-app options.
+
+# Additionally:
+# --- 
+# Full Corrected Script
+
+# After:
+#python
+# Example of fixed code
+print("Hello World")
 from fastapi import FastAPI, Request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
@@ -224,58 +202,42 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-from telegram.ext import ContextTypes
-
 # Payment Handler
 async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     method, plan = query.data.split("_")[1], query.data.split("_")[2]
 
-    # Define the keyboard buttons
-    keyboard = [
-        [InlineKeyboardButton("📱 Pay 1", web_app=WebAppInfo(url="https://shopify.com"))],
-        [InlineKeyboardButton("📱 Pay 2", web_app=WebAppInfo(url="https://shopify.com"))],
-        [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
-        [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-        [InlineKeyboardButton("❓ Support", callback_data="support")]
-    ]
-
-    # Example condition logic
-    if plan == "monthly":  # Replace with your actual logic
+    if method == "shopify":
+        shopify_link = SHOPIFY_LIFETIME_LINK if plan == "lifetime" else SHOPIFY_MONTHLY_LINK
+        keyboard = [
+            [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
+            [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+            [InlineKeyboardButton("❓ Support", callback_data="support")]
+        ]
         await query.message.edit_text(
-            text=(
-                "💎 **Choose your subscription below using Apple Pay / Google Pay** 💎\n"
-                "📧 **Your VIP link will be sent to your email instantly!** 🚀\n\n"
-                "**Enjoy exclusive access now!** ✨"
-            ),
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="Markdown"
+            text=f"🛒 Click the button below to pay for **{plan.upper()}** via Apple Pay / Google Pay.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(f"Pay {plan.upper()}", web_app=WebAppInfo(url=shopify_link))],
+                [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
+                [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+                [InlineKeyboardButton("❓ Support", callback_data="support")]
+            ])
         )
     else:
         message = {
-            "crypto": (
-                "⚙️ **Pay with Crypto**:\n"
-                "Send payment to:\n - **Ethereum**: `0x123456`\n✅ Click 'I Paid' when done."
-            ),
-            "paypal": (
-                "🛒 **PayPal Secure Checkout**:\n"
-                "Send payment to `onlyvipfan@outlook.com`\n✅ **Friends and Family Only**\n"
-            )
+            "crypto": "₿ Pay with Crypto:\nSend payment to:\n- **Ethereum**: `0x123456`\n✅ Click 'I Paid' when done.",
+            "paypal": "💳 PayPal Secure Checkout:\n➡️ Send payment to `onlyvipfan@outlook.com`\n✅ **Friends and Family Only**\n❌ Don’t leave a note!"
         }
         await query.message.edit_text(
-            text=message["crypto"] if plan == "crypto" else message["paypal"],
+            text=message[method],
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_{method}_{plan}")],
+                [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
+                [InlineKeyboardButton("❓ Support", callback_data="support")]
+            ]),
             parse_mode="Markdown"
         )
-
-keyboard = [
-    [InlineKeyboardButton("📱 Pay 1", web_app=WebAppInfo(url=SHOPIFY_MONTHLY_LINK))],
-    [InlineKeyboardButton("📱 Pay 2", web_app=WebAppInfo(url=SHOPIFY_LIFETIME_LINK))],
-    [InlineKeyboardButton("✅ I’ve Paid", callback_data=f"paid_shopify_{plan}")],
-    [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
-    [InlineKeyboardButton("❓ Support", callback_data="support")]
-]
 
 # Paid Confirmation Handler
 async def handle_paid(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -328,47 +290,4 @@ async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start_callback_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("1 MONTH (£6.75)", callback_data="select_1_month")],
-        [InlineKeyboardButton("LIFETIME (£10.00)", callback_data="select_lifetime")],
-        [InlineKeyboardButton("❓ Need Help?", callback_data="support")]
-    ]
-
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await update.callback_query.message.edit_text(
-        text="💎 Welcome back! Please select a subscription plan:",
-        reply_markup=reply_markup
-    )
-
-# Startup Event
-@app.on_event("startup")
-async def startup_event():
-    global telegram_app
-    telegram_app = Application.builder().token(BOT_TOKEN).build()
-    telegram_app.add_handler(CommandHandler("start", start))
-    telegram_app.add_handler(CallbackQueryHandler(handle_selection, pattern="select_.*"))
-    telegram_app.add_handler(CallbackQueryHandler(handle_payment, pattern="payment_.*"))
-    telegram_app.add_handler(CallbackQueryHandler(handle_paid, pattern="paid_.*"))
-    telegram_app.add_handler(CallbackQueryHandler(handle_support, pattern="support"))
-    telegram_app.add_handler(CallbackQueryHandler(handle_back, pattern="back"))  # No error now
-    await telegram_app.initialize()
-    await telegram_app.bot.set_webhook(WEBHOOK_URL)
-    await telegram_app.start()
-    logger.info("Telegram bot started successfully.")
-
-# Root Route
-@app.get("/")
-async def root():
-    return {"status": "OK", "message": "Welcome to the Telegram Bot API"}
-
-# Uptime Route
-@app.api_route("/uptime", methods=["GET", "HEAD"])
-async def uptime():
-    return {"status": "OK", "message": "Service is running"}
-
-if __name__ == "__main__":
-    import os
-    import uvicorn
-
-    port = int(os.environ.get("PORT", 8000))  # Use Render's PORT or fallback to 8000
-    uvicorn.run(app, host="0.0.0.0", port=port)
+        [InlineKeyboardButton
