@@ -224,23 +224,25 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-    # Notify user
-    await query.edit_message_text(
-        text=(
-            "✅ **Payment Received! Thank You!** 🎉\n\n"
-            "📸 Please send a **screenshot** or **transaction ID** to our support team for verification:\n"
-            f"👉 {SUPPORT_CONTACT}\n\n"
-            "⚡ **Important Notice:**\n"
-            "🔗 If you paid via **PayPal** or **Crypto**, your VIP link will be sent manually once the owner comes online.\n"
-            "⏰ Our support team operates **8:00 AM - 12:00 AM BST**.\n\n"
-            "Thank you for choosing VIP Bot! 💎 Your patience is greatly appreciated."
-        ),
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("💬 Support", callback_data="support")],
-            [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
-        ]),
-        parse_mode="Markdown"
-    )
+# Notify User
+await query.edit_message_text(
+    text=(
+        "✅ **Payment Received! Thank You!** 🎉\n\n"
+        "📸 Please send a **screenshot** or **transaction ID** to our support team for verification:\n"
+        f"👉 {SUPPORT_CONTACT}\n\n"
+        "⚡ **Important Notice:**\n"
+        "🔗 If you paid via **Apple Pay/Google Pay**, please check your **email inbox** and **junk/spam folder** "
+        "for your VIP link. It is sent **immediately** after payment. 📧\n"
+        "🔗 If you paid via **PayPal** or **Crypto**, your VIP link will be sent manually once the owner comes online.\n\n"
+        "⏰ Our support team operates **8:00 AM - 12:00 AM BST**.\n\n"
+        "Thank you for choosing VIP Bot! 💎 Your patience is greatly appreciated."
+    ),
+    reply_markup=InlineKeyboardMarkup([
+        [InlineKeyboardButton("💬 Support", callback_data="support")],
+        [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
+    ]),
+    parse_mode="Markdown"
+)
 
 # Support Handler
 async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
