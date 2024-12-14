@@ -225,7 +225,7 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # Notify User
-await query.edit_message_text(
+    await query.edit_message_text(
     text=(
         "✅ **Payment Received! Thank You!** 🎉\n\n"
         "📸 Please send a **screenshot** or **transaction ID** to our support team for verification:\n"
