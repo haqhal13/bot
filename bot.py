@@ -145,6 +145,8 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("💎 Lifetime (£10.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"].replace("{plan_type}", "lifetime")))],
             [InlineKeyboardButton("⏳ 1 Month (£6.75)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"].replace("{plan_type}", "1_month")))],
             [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
+            [InlineKeyboardButton("💬 Support", callback_data="support")],
+            [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
         ]
     elif method == "crypto":
         message = (
@@ -157,7 +159,13 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "✅ Once you've sent the payment, click 'I've Paid' to confirm.\n"
             "📨 Your VIP link will be sent to you manually. Thank you! 💖"
         )
-        keyboard = [[InlineKeyboardButton("✅ I've Paid", callback_data="paid")]]
+        keyboard = [
+            [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
+            [InlineKeyboardButton("💬 Support", callback_data="support")],
+            [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
+        ]
+
+
     elif method == "paypal":
         message = (
             "💸 **Easy Payment with PayPal!**\n\n"
