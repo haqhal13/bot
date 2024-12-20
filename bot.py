@@ -126,13 +126,13 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
+    # Extract latest method and plan
     _, method, plan = query.data.split("_")
     plan_text = "LIFETIME" if plan == "lifetime" else "1 MONTH"
-    username = query.from_user.username or "No Username"
 
-    # Store data for later use in confirmation
-    context.user_data["plan_text"] = plan_text
-    context.user_data["method"] = method
+    # Store the latest plan and method
+    context.user_data["plan_text"] = plan_text  # Store latest plan
+    context.user_data["method"] = method  # Store latest method
 
     # Payment Details
     if method == "shopify":
@@ -167,8 +167,6 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("💬 Support", callback_data="support")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
         ]
-
-
     elif method == "paypal":
         message = (
             "💸 **Easy Payment with PayPal!**\n\n"
@@ -188,6 +186,7 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("💬 Support", callback_data="support")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
         ]
+
     await query.edit_message_text(
         text=message,
         reply_markup=InlineKeyboardMarkup(keyboard),
