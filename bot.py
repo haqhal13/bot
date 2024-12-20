@@ -187,6 +187,7 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
         ]
 
+    # Update the message with the selected payment details
     await query.edit_message_text(
         text=message,
         reply_markup=InlineKeyboardMarkup(keyboard),
@@ -198,22 +199,9 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    # Initialize fallback values
+    # Retrieve latest values from user_data
     plan_text = context.user_data.get("plan_text", "N/A")
     method = context.user_data.get("method", "N/A")
-
-    try:
-        # Safely check for callback_data in current buttons
-        buttons = query.message.reply_markup.inline_keyboard
-        for row in buttons:
-            for button in row:
-                if button.callback_data and "payment" in button.callback_data:
-                    _, method_from_button, plan_from_button = button.callback_data.split("_")
-                    plan_text = "LIFETIME" if plan_from_button == "lifetime" else "1 MONTH"
-                    method = method_from_button.capitalize()
-    except (AttributeError, TypeError):
-        # Fallback to stored context values if callback_data doesn't exist
-        pass
 
     # Notify Admin
     username = query.from_user.username or "No Username"
@@ -237,8 +225,8 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "✅ **Payment Received! Thank You!** 🎉\n\n"
             "📸 Please send a **screenshot** or **transaction ID** to our support team for verification:\n"
             f"👉 {SUPPORT_CONTACT}\n\n"
-            "⚡ **Important Notice:**\n"
-            "🔗 If you paid via **Apple Pay/Google Pay**, check your email inbox and spam folder.\n"
+            "⚡ **Important:**\n"
+            "🔗 If you paid via **Apple Pay/Google Pay**, check your email inbox.\n"
             "🔗 If you paid via **PayPal** or **Crypto**, your VIP link will be sent manually.\n\n"
             "⏰ Support Hours: 8:00 AM - 12:00 AM BST.\n\n"
             "Thank you for choosing VIP Bot! 💎"
