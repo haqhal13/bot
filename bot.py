@@ -126,17 +126,15 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    # Extract method and plan
+    # Extract latest method and plan
     _, method, plan = query.data.split("_")
     plan_text = "LIFETIME" if plan == "lifetime" else "1 MONTH"
 
-    # Store Shopify plan only if Shopify is selected
-    if method == "shopify":
-        context.user_data["shopify_plan"] = plan_text  # Store latest mini app plan
+    # Store the latest selection as the 'last mini app opened'
+    context.user_data["plan_text"] = plan_text
+    context.user_data["method"] = method
 
-    context.user_data["method"] = method  # Store payment method
-
-    # Payment Instructions
+    # Define payment messages and buttons
     if method == "shopify":
         message = (
             "🚀 **Instant Access with Apple Pay/Google Pay!**\n\n"
@@ -149,7 +147,7 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [InlineKeyboardButton("💎 Lifetime (£10.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["lifetime"]))],
             [InlineKeyboardButton("⏳ 1 Month (£6.75)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["1_month"]))],
-            [InlineKeyboardButton("✅ I've Paid", callback_data="paid_shopify")],
+            [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
         ]
     elif method == "crypto":
@@ -157,58 +155,49 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "⚡ **Pay Securely with Crypto!**\n\n"
             "🔗 **Send Your Payment To:**\n"
             f"`{PAYMENT_INFO['crypto']['eth']}`\n\n"
-            "💎 **Plans:**\n"
-            "⏳ 1 Month: **$8 USD**\n"
-            "💎 Lifetime: **$15 USD** 🎉\n\n"
-            "✅ Click 'I've Paid' to confirm."
+            "💎 **Choose Your Plan:**\n"
+            "⏳ 1 Month Access: **$8 USD** 🌟\n"
+            "💎 Lifetime Access: **$15 USD** 🎉\n\n"
+            "✅ Once you've sent the payment, click 'I've Paid' to confirm."
         )
         keyboard = [
-            [InlineKeyboardButton("✅ I've Paid", callback_data="paid_crypto")],
+            [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
         ]
     elif method == "paypal":
         message = (
-            "💸 **Pay with PayPal!**\n\n"
+            "💸 **Easy Payment with PayPal!**\n\n"
             "➡️ **Send Payment To:**\n"
             f"`{PAYMENT_INFO['paypal']}`\n\n"
-            "💎 Plans:\n"
-            "⏳ 1 Month: **£6.75 GBP**\n"
-            "💎 Lifetime: **£10.00 GBP** 🎉\n\n"
-            "⚠️ **Important:**\n"
-            "✅ Send as Friends and Family.\n"
-            "❌ *Do NOT leave a note.*\n\n"
-            "✅ Click 'I've Paid' to confirm."
+            "💎 **Choose Your Plan:**\n"
+            "⏳ 1 Month Access: **£6.75 GBP** 🌟\n"
+            "💎 Lifetime Access: **£10.00 GBP** 🎉\n\n"
+            "✅ Once payment is complete, click 'I've Paid' to confirm."
         )
         keyboard = [
-            [InlineKeyboardButton("✅ I've Paid", callback_data="paid_paypal")],
+            [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
         ]
 
+    # Update the message with correct buttons
     await query.edit_message_text(
         text=message,
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="Markdown"
     )
+
 # Confirm Payment and Notify Admin
 async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
+    # Retrieve the last stored plan and method
+    plan_text = context.user_data.get("plan_text", "N/A")
+    method = context.user_data.get("method", "N/A")
     username = query.from_user.username or "No Username"
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    method = context.user_data.get("method", "N/A")
-    
-    # Decide Shopify Plan based on the last mini app button
-    if query.data == "paid_shopify":
-        plan_text = context.user_data.get("shopify_plan", "N/A")
-    elif query.data == "paid_crypto":
-        plan_text = "CRYPTO"
-    elif query.data == "paid_paypal":
-        plan_text = "PAYPAL"
-    else:
-        plan_text = "N/A"
 
-    # Send Notification to Admin
+    # Notify Admin
     await context.bot.send_message(
         chat_id=ADMIN_CHAT_ID,
         text=(
@@ -221,17 +210,15 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-    # Notify User
+    # Acknowledge user
     await query.edit_message_text(
         text=(
             "✅ **Payment Received! Thank You!** 🎉\n\n"
             "📸 Please send a **screenshot** or **transaction ID** to our support team for verification.\n"
-            f"👉 {SUPPORT_CONTACT}\n\n"
-            "⚡ **Important:**\n"
-            "🔗 For **Apple Pay/Google Pay**, check your email inbox.\n"
-            "🔗 For **PayPal/Crypto**, links will be sent manually.\n\n"
-            "⏰ **Support Hours:** 8:00 AM - 12:00 AM BST\n\n"
-            "Thank you for choosing VIP Bot! 💎"
+            "👉 @ZakiVip1\n\n"
+            "⚡ **Important Notice:**\n"
+            "🔗 If you paid via Apple Pay/Google Pay, check your email inbox for the VIP link.\n"
+            "🔗 If you paid via PayPal or Crypto, your VIP link will be sent manually."
         ),
         parse_mode="Markdown"
     )
