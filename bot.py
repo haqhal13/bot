@@ -198,15 +198,22 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    # Retrieve the latest plan and method
+    # Initialize fallback values
     plan_text = context.user_data.get("plan_text", "N/A")
     method = context.user_data.get("method", "N/A")
 
-    # Force refresh values from button data
-    if "payment" in query.message.reply_markup.inline_keyboard[0][0].callback_data:
-        _, method_from_button, plan_from_button = query.message.reply_markup.inline_keyboard[0][0].callback_data.split("_")
-        plan_text = "LIFETIME" if plan_from_button == "lifetime" else "1 MONTH"
-        method = method_from_button.capitalize()
+    try:
+        # Safely check for callback_data in current buttons
+        buttons = query.message.reply_markup.inline_keyboard
+        for row in buttons:
+            for button in row:
+                if button.callback_data and "payment" in button.callback_data:
+                    _, method_from_button, plan_from_button = button.callback_data.split("_")
+                    plan_text = "LIFETIME" if plan_from_button == "lifetime" else "1 MONTH"
+                    method = method_from_button.capitalize()
+    except (AttributeError, TypeError):
+        # Fallback to stored context values if callback_data doesn't exist
+        pass
 
     # Notify Admin
     username = query.from_user.username or "No Username"
@@ -224,7 +231,7 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-    # Confirm Payment to User
+    # Notify User
     await query.edit_message_text(
         text=(
             "✅ **Payment Received! Thank You!** 🎉\n\n"
