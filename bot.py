@@ -198,34 +198,43 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    username = query.from_user.username or "No Username"
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Retrieve the latest plan and method
     plan_text = context.user_data.get("plan_text", "N/A")
     method = context.user_data.get("method", "N/A")
 
-    # Notify Admin only when 'I've Paid' is clicked
+    # Force refresh values from button data
+    if "payment" in query.message.reply_markup.inline_keyboard[0][0].callback_data:
+        _, method_from_button, plan_from_button = query.message.reply_markup.inline_keyboard[0][0].callback_data.split("_")
+        plan_text = "LIFETIME" if plan_from_button == "lifetime" else "1 MONTH"
+        method = method_from_button.capitalize()
+
+    # Notify Admin
+    username = query.from_user.username or "No Username"
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     await context.bot.send_message(
         chat_id=ADMIN_CHAT_ID,
         text=(
             f"📝 **Payment Notification**\n"
             f"👤 **User:** @{username}\n"
             f"📋 **Plan:** {plan_text}\n"
-            f"💳 **Method:** {method.capitalize()}\n"
+            f"💳 **Method:** {method}\n"
             f"🕒 **Time:** {current_time}"
         ),
         parse_mode="Markdown"
     )
 
-    # Notify User
+    # Confirm Payment to User
     await query.edit_message_text(
         text=(
             "✅ **Payment Received! Thank You!** 🎉\n\n"
             "📸 Please send a **screenshot** or **transaction ID** to our support team for verification:\n"
             f"👉 {SUPPORT_CONTACT}\n\n"
             "⚡ **Important Notice:**\n"
-            "🔗 If you paid via **PayPal** or **Crypto**, your VIP link will be sent manually once the owner comes online.\n"
-            "⏰ Our support team operates **8:00 AM - 12:00 AM BST**.\n\n"
-            "Thank you for choosing VIP Bot! 💎 Your patience is greatly appreciated."
+            "🔗 If you paid via **Apple Pay/Google Pay**, check your email inbox and spam folder.\n"
+            "🔗 If you paid via **PayPal** or **Crypto**, your VIP link will be sent manually.\n\n"
+            "⏰ Support Hours: 8:00 AM - 12:00 AM BST.\n\n"
+            "Thank you for choosing VIP Bot! 💎"
         ),
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("💬 Support", callback_data="support")],
@@ -233,27 +242,6 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]),
         parse_mode="Markdown"
     )
-
-# Notify User
-    await query.edit_message_text(
-    text=(
-        "✅ **Payment Received! Thank You!** 🎉\n\n"
-        "📸 Please send a **screenshot** or **transaction ID** to our support team for verification:\n"
-        f"👉 {SUPPORT_CONTACT}\n\n"
-        "⚡ **Important Notice:**\n"
-        "🔗 If you paid via **Apple Pay/Google Pay**, please check your **email inbox** and **junk/spam folder** "
-        "for your VIP link. It is sent **immediately** after payment. 📧\n"
-        "🔗 If you paid via **PayPal** or **Crypto**, your VIP link will be sent manually once the owner comes online.\n\n"
-        "⏰ Our support team operates **8:00 AM - 12:00 AM BST**.\n\n"
-        "Thank you for choosing VIP Bot! 💎 Your patience is greatly appreciated."
-    ),
-    reply_markup=InlineKeyboardMarkup([
-        [InlineKeyboardButton("💬 Support", callback_data="support")],
-        [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
-    ]),
-    parse_mode="Markdown"
-)
-
 # Support Handler
 async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
