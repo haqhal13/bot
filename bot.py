@@ -19,7 +19,7 @@ PAYMENT_INFO = {
         "1_month": "https://5fbqad-qz.myshopify.com/cart/50086610207066:1",
         "lifetime": "https://5fbqad-qz.myshopify.com/cart/50160363766106:1",
     },
-    "crypto": {"eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
+    "crypto": {"Crypto Link": "https://t.me/+t5kEU2mSziQ1NTg0"},
     "paypal": "onlyvipfan@outlook.com",
 }
 
