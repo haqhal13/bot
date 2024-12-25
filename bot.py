@@ -18,7 +18,7 @@ PAYMENT_INFO = {
         "1_month": "https://5fbqad-qz.myshopify.com/cart/50086610207066:1",
         "lifetime": "https://5fbqad-qz.myshopify.com/cart/50160363766106:1",
     },
-    "crypto": "https://t.me/+t5kEU2mSziQ1NTg0",
+    "crypto": "https://t.me/+t5kEU2mSziQ1NTg0",  # Generic crypto link
     "paypal": "onlyvipfan@outlook.com",
 }
 
@@ -149,20 +149,17 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
         ]
-    elif method == "crypto":
-        message = (
+    def get_crypto_payment_message(crypto_key):
+        wallet_address = PAYMENT_INFO['crypto'].get(crypto_key, "Address not available")
+        return (
             "⚡ **Pay Securely with Crypto!**\n\n"
-            "🔗 **Send Your Payment To:**\n"
-            f"`{PAYMENT_INFO['crypto']['eth']}`\n\n"
+            f"🔗 **Send Your {crypto_key.upper()} Payment To:**\n"
+            f"`{wallet_address}`\n\n"
             "💎 **Choose Your Plan:**\n"
             "⏳ 1 Month Access: **$8 USD** 🌟\n"
             "💎 Lifetime Access: **$15 USD** 🎉\n\n"
             "✅ Once you've sent the payment, click 'I've Paid' to confirm."
         )
-        keyboard = [
-            [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
-            [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
-        ]
     elif method == "paypal":
         message = (
             "💸 **Easy Payment with PayPal!**\n\n"
