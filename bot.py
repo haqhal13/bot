@@ -13,12 +13,13 @@ UPTIME_MONITOR_URL = "https://bot-1-f2wh.onrender.com/uptime"
 SUPPORT_CONTACT = "@ZakiVip1"
 ADMIN_CHAT_ID = 834523364  # Replace with the admin's chat ID
 
+# Payment Information
 PAYMENT_INFO = {
     "shopify": {
         "1_month": "https://5fbqad-qz.myshopify.com/cart/50086610207066:1",
         "lifetime": "https://5fbqad-qz.myshopify.com/cart/50160363766106:1",
     },
-    "crypto": "https://t.me/+t5kEU2mSziQ1NTg0",  # Generic crypto link
+    "crypto": {"eth": "0x9ebeBd89395CaD9C29Ee0B5fC614E6f307d7Ca82"},
     "paypal": "onlyvipfan@outlook.com",
 }
 
@@ -149,33 +150,20 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
         ]
-if method == "crypto":
-    message = (
-        "⚡ **Pay Securely with Crypto!**\n\n"
-        "🔗 **Send Your Payment To:**\n"
-        f"`{PAYMENT_INFO['crypto']}`\n\n"
-        "💎 **Choose Your Plan:**\n"
-        "⏳ 1 Month Access: **$8 USD** 🌟\n"
-        "💎 Lifetime Access: **$15 USD** 🎉\n\n"
-        "✅ Once you've sent the payment, click 'I've Paid' to confirm."
-    )
-    keyboard = [
-        [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
-        [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
-    ]
-elif method == "paypal":  # Ensure proper alignment and colon
-    message = (
-        "💳 **Pay with PayPal!**\n\n"
-        f"📧 Send your payment to: `{PAYMENT_INFO['paypal']}`\n\n"
-        "💎 **Choose Your Plan:**\n"
-        "⏳ 1 Month Access: **$8 USD** 🌟\n"
-        "💎 Lifetime Access: **$15 USD** 🎉\n\n"
-        "✅ Once you've sent the payment, click 'I've Paid' to confirm."
-    )
-    keyboard = [
-        [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
-        [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
-    ]
+    elif method == "crypto":
+        message = (
+            "⚡ **Pay Securely with Crypto!**\n\n"
+            "🔗 **Send Your Payment To:**\n"
+            f"`{PAYMENT_INFO['crypto']['eth']}`\n\n"
+            "💎 **Choose Your Plan:**\n"
+            "⏳ 1 Month Access: **$8 USD** 🌟\n"
+            "💎 Lifetime Access: **$15 USD** 🎉\n\n"
+            "✅ Once you've sent the payment, click 'I've Paid' to confirm."
+        )
+        keyboard = [
+            [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
+            [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
+        ]
     elif method == "paypal":
         message = (
             "💸 **Easy Payment with PayPal!**\n\n"
