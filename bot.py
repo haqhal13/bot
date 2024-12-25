@@ -13,13 +13,12 @@ UPTIME_MONITOR_URL = "https://bot-1-f2wh.onrender.com/uptime"
 SUPPORT_CONTACT = "@ZakiVip1"
 ADMIN_CHAT_ID = 834523364  # Replace with the admin's chat ID
 
-# Payment Information
 PAYMENT_INFO = {
     "shopify": {
         "1_month": "https://5fbqad-qz.myshopify.com/cart/50086610207066:1",
         "lifetime": "https://5fbqad-qz.myshopify.com/cart/50160363766106:1",
     },
-    "crypto": {"Crypto Link": "https://t.me/+t5kEU2mSziQ1NTg0"},
+    "crypto": "https://t.me/+t5kEU2mSziQ1NTg0",
     "paypal": "onlyvipfan@outlook.com",
 }
 
