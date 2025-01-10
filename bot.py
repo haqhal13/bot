@@ -36,33 +36,48 @@ START_TIME = datetime.now()
 @app.on_event("startup")
 async def startup_event():
     global telegram_app
-    telegram_app = Application.builder().token(BOT_TOKEN).build()
-    telegram_app.add_handler(CommandHandler("start", start))
-    telegram_app.add_handler(CallbackQueryHandler(handle_subscription, pattern="select_.*"))
-    telegram_app.add_handler(CallbackQueryHandler(handle_payment, pattern="payment_.*"))
-    telegram_app.add_handler(CallbackQueryHandler(confirm_payment, pattern="paid"))
-    telegram_app.add_handler(CallbackQueryHandler(handle_back, pattern="back"))
-    telegram_app.add_handler(CallbackQueryHandler(handle_support, pattern="support"))
+    try:
+        # Initialize Telegram bot
+        telegram_app = Application.builder().token(BOT_TOKEN).build()
+        telegram_app.add_handler(CommandHandler("start", start))
+        telegram_app.add_handler(CallbackQueryHandler(handle_subscription, pattern="select_.*"))
+        telegram_app.add_handler(CallbackQueryHandler(handle_payment, pattern="payment_.*"))
+        telegram_app.add_handler(CallbackQueryHandler(confirm_payment, pattern="paid"))
+        telegram_app.add_handler(CallbackQueryHandler(handle_back, pattern="back"))
+        telegram_app.add_handler(CallbackQueryHandler(handle_support, pattern="support"))
 
-    logger.info("Telegram Bot Initialized!")
+        logger.info("Handlers added successfully!")
 
-    # Uptime Robot Monitoring
-    async with httpx.AsyncClient() as client:
-        await client.get(UPTIME_MONITOR_URL)
-        logger.info("Uptime Monitoring Reintegrated!")
+        # Uptime Monitoring
+        async with httpx.AsyncClient(timeout=10) as client:
+            try:
+                response = await client.get(UPTIME_MONITOR_URL)
+                if response.status_code == 200:
+                    logger.info("Uptime Monitoring Reintegrated!")
+                else:
+                    logger.warning(f"Uptime monitor returned unexpected status: {response.status_code}")
+            except httpx.RequestError as e:
+                logger.error(f"Uptime monitoring failed: {e}")
 
-    await telegram_app.initialize()
-    await telegram_app.bot.delete_webhook()
-    await telegram_app.bot.set_webhook(WEBHOOK_URL)
-    await telegram_app.start()
+        await telegram_app.initialize()
+        logger.info("Telegram Bot Initialized!")
+        await telegram_app.bot.delete_webhook()
+        await telegram_app.bot.set_webhook(WEBHOOK_URL)
+        await telegram_app.start()
+    except Exception as e:
+        logger.error(f"Error during startup: {e}")
 
 
 @app.post("/webhook")
 async def webhook(request: Request):
     global telegram_app
-    update = Update.de_json(await request.json(), telegram_app.bot)
-    await telegram_app.process_update(update)
-    return {"status": "ok"}
+    try:
+        update = Update.de_json(await request.json(), telegram_app.bot)
+        await telegram_app.process_update(update)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"Error processing webhook: {e}")
+        return {"status": "error", "message": str(e)}
 
 
 @app.get("/uptime")
@@ -93,6 +108,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
     )
 
+
 # Handle Subscription Plan Selection
 async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -116,10 +132,11 @@ async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
         "🎉 Choose your preferred payment method below and get access today!"
     )
     await query.edit_message_text(
-        text=message, 
+        text=message,
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="Markdown"
     )
+
 
 # Handle Payment Method Selection
 async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -130,11 +147,9 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     _, method, plan = query.data.split("_")
     plan_text = "LIFETIME" if plan == "lifetime" else "1 MONTH"
 
-    # Store the latest selection as the 'last mini app opened'
     context.user_data["plan_text"] = plan_text
     context.user_data["method"] = method
 
-    # Define payment messages and buttons
     if method == "shopify":
         message = (
             "🚀 **Instant Access with Apple Pay/Google Pay!**\n\n"
@@ -153,7 +168,6 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif method == "crypto":
         message = (
             "⚡ **Pay Securely with Crypto!**\n\n"
-            "🔗 **Pay via the following link:**\n"
             f"[Crypto Payment Link]({PAYMENT_INFO['crypto']['link']})\n\n"
             "💎 **Choose Your Plan:**\n"
             "⏳ 1 Month Access: **$8 USD** 🌟\n"
@@ -167,7 +181,6 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif method == "paypal":
         message = (
             "💸 **Easy Payment with PayPal!**\n\n"
-            "➡️ **Send Payment To:**\n"
             f"`{PAYMENT_INFO['paypal']}`\n\n"
             "💎 **Choose Your Plan:**\n"
             "⏳ 1 Month Access: **£6.75 GBP** 🌟\n"
@@ -179,25 +192,23 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
         ]
 
-    # Update the message with correct buttons
     await query.edit_message_text(
         text=message,
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="Markdown"
     )
 
+
 # Confirm Payment and Notify Admin
 async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    # Retrieve the last stored plan and method
     plan_text = context.user_data.get("plan_text", "N/A")
     method = context.user_data.get("method", "N/A")
     username = query.from_user.username or "No Username"
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Notify Admin
     await context.bot.send_message(
         chat_id=ADMIN_CHAT_ID,
         text=(
@@ -210,18 +221,19 @@ async def confirm_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
-    # Acknowledge user
     await query.edit_message_text(
         text=(
             "✅ **Payment Received! Thank You!** 🎉\n\n"
             "📸 Please send a **screenshot** or **transaction ID** to our support team for verification.\n"
-            "👉 @ZakiVip1\n\n"
+            f"👉 {SUPPORT_CONTACT}\n\n"
             "⚡ **Important Notice:**\n"
             "🔗 If you paid via Apple Pay/Google Pay, check your email inbox for the VIP link.\n"
             "🔗 If you paid via PayPal or Crypto, your VIP link will be sent manually."
         ),
         parse_mode="Markdown"
     )
+
+
 # Support Handler
 async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -230,7 +242,7 @@ async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text=(
             "💬 **Need Assistance? We're Here to Help!**\n\n"
             f"🕒 **Working Hours:** 8:00 AM - 12:00 AM BST\n"
-            "📨 For support, contact us directly at:\n"
+            f"📨 For support, contact us directly at:\n"
             f"👉 {SUPPORT_CONTACT}\n\n"
             "⚡ Our team is ready to assist you as quickly as possible. "
             "Thank you for choosing VIP Bot! 💎"
@@ -241,15 +253,17 @@ async def handle_support(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
+
 # Go Back Handler
 async def handle_back(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     await start(query, context)
 
+
 from fastapi import Response
 
-# UPTIME
+
 @app.head("/uptime")
 async def head_uptime():
     return Response(status_code=200)
