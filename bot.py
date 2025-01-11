@@ -94,7 +94,7 @@ async def get_uptime():
 # Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("1 Month (£10.00)", callback_data="select_1_month")],
+        [InlineKeyboardButton("1 Month (£9.00)", callback_data="select_1_month")],
         [InlineKeyboardButton("Lifetime (£15.00)", callback_data="select_lifetime")],
         [InlineKeyboardButton("Support", callback_data="support")],
     ]
@@ -155,13 +155,13 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🚀 **Instant Access with Apple Pay/Google Pay!**\n\n"
             "🎁 **Choose Your VIP Plan:**\n"
             "💎 Lifetime Access: **£15.00 GBP** 🎉\n"
-            "⏳ 1 Month Access: **£10.00 GBP** 🌟\n\n"
+            "⏳ 1 Month Access: **£9.00 GBP** 🌟\n\n"
             "🛒 Click below to pay securely and get **INSTANT VIP access** delivered to your email! 📧\n\n"
             "✅ After payment, click 'I've Paid' to confirm."
         )
         keyboard = [
-            [InlineKeyboardButton("💎 Lifetime (£10.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["lifetime"]))],
-            [InlineKeyboardButton("⏳ 1 Month (£6.75)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["1_month"]))],
+            [InlineKeyboardButton("💎 Lifetime (£15.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["lifetime"]))],
+            [InlineKeyboardButton("⏳ 1 Month (£9.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["1_month"]))],
             [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
         ]
@@ -170,7 +170,7 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "⚡ **Pay Securely with Crypto!**\n\n"
             f"[Crypto Payment Link]({PAYMENT_INFO['crypto']['link']})\n\n"
             "💎 **Choose Your Plan:**\n"
-            "⏳ 1 Month Access: **$12.50 USD** 🌟\n"
+            "⏳ 1 Month Access: **$11.00 USD** 🌟\n"
             "💎 Lifetime Access: **$19 USD** 🎉\n\n"
             "✅ Once you've sent the payment, click 'I've Paid' to confirm."
         )
@@ -183,7 +183,7 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "💸 **Easy Payment with PayPal!**\n\n"
             f"`{PAYMENT_INFO['paypal']}`\n\n"
             "💎 **Choose Your Plan:**\n"
-            "⏳ 1 Month Access: **£10.00 GBP** 🌟\n"
+            "⏳ 1 Month Access: **£9.00 GBP** 🌟\n"
             "💎 Lifetime Access: **£15.00 GBP** 🎉\n\n"
             "✅ Once payment is complete, click 'I've Paid' to confirm."
         )
