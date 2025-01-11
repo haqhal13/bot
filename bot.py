@@ -94,8 +94,8 @@ async def get_uptime():
 # Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("1 Month (£6.75)", callback_data="select_1_month")],
-        [InlineKeyboardButton("Lifetime (£10.00)", callback_data="select_lifetime")],
+        [InlineKeyboardButton("1 Month (£10.00)", callback_data="select_1_month")],
+        [InlineKeyboardButton("Lifetime (£15.00)", callback_data="select_lifetime")],
         [InlineKeyboardButton("Support", callback_data="support")],
     ]
     await update.message.reply_text(
@@ -154,8 +154,8 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = (
             "🚀 **Instant Access with Apple Pay/Google Pay!**\n\n"
             "🎁 **Choose Your VIP Plan:**\n"
-            "💎 Lifetime Access: **£10.00 GBP** 🎉\n"
-            "⏳ 1 Month Access: **£6.75 GBP** 🌟\n\n"
+            "💎 Lifetime Access: **£15.00 GBP** 🎉\n"
+            "⏳ 1 Month Access: **£10.00 GBP** 🌟\n\n"
             "🛒 Click below to pay securely and get **INSTANT VIP access** delivered to your email! 📧\n\n"
             "✅ After payment, click 'I've Paid' to confirm."
         )
@@ -170,8 +170,8 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "⚡ **Pay Securely with Crypto!**\n\n"
             f"[Crypto Payment Link]({PAYMENT_INFO['crypto']['link']})\n\n"
             "💎 **Choose Your Plan:**\n"
-            "⏳ 1 Month Access: **$8 USD** 🌟\n"
-            "💎 Lifetime Access: **$15 USD** 🎉\n\n"
+            "⏳ 1 Month Access: **$12.50 USD** 🌟\n"
+            "💎 Lifetime Access: **$19 USD** 🎉\n\n"
             "✅ Once you've sent the payment, click 'I've Paid' to confirm."
         )
         keyboard = [
@@ -183,8 +183,8 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "💸 **Easy Payment with PayPal!**\n\n"
             f"`{PAYMENT_INFO['paypal']}`\n\n"
             "💎 **Choose Your Plan:**\n"
-            "⏳ 1 Month Access: **£6.75 GBP** 🌟\n"
-            "💎 Lifetime Access: **£10.00 GBP** 🎉\n\n"
+            "⏳ 1 Month Access: **£10.00 GBP** 🌟\n"
+            "💎 Lifetime Access: **£15.00 GBP** 🎉\n\n"
             "✅ Once payment is complete, click 'I've Paid' to confirm."
         )
         keyboard = [
