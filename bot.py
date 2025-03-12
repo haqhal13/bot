@@ -20,7 +20,7 @@ PAYMENT_INFO = {
         "lifetime": "https://5fbqad-qz.myshopify.com/cart/50160363766106:1",
     },
     "crypto": {"link": "https://t.me/+t5kEU2mSziQ1NTg0"},
-    "paypal": "not working right now , please use apple pay or google pay",
+    "paypal": "@OFVIPFAN ON PAYPAL",
 }
 
 # Logging Configuration
