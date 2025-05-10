@@ -11,7 +11,7 @@ BOT_TOKEN = "7746788670:AAH8BX0M_FZyi40HFAacR9prN74KMD0p1es"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 UPTIME_MONITOR_URL = "https://bot-1-f2wh.onrender.com/uptime"
 SUPPORT_CONTACT = "@Sebvip"
-ADMIN_CHAT_ID = 834523364  # Replace with the admin's chat ID
+ADMIN_CHAT_ID = 850625134  # Replace with the admin's chat ID
 
 # Payment Information
 PAYMENT_INFO = {
@@ -19,8 +19,8 @@ PAYMENT_INFO = {
         "1_month": "https://nt9qev-td.myshopify.com/cart/55619895394678:1",
         "lifetime": "https://nt9qev-td.myshopify.com/cart/55619898737014:1",
     },
-    "crypto": {"link": "https://t.me/+t5kEU2mSziQ1NTg0"},
-    "paypal": "@OFVIPFAN ON PAYPAL",
+    "crypto": {"link": "https://t.me/+0ys4_6KtfzsyOTFk"},
+    "paypal": "@Aieducation ON PAYPAL F&F only we cant process order if it isnt F&F",
 }
 
 # Logging Configuration
@@ -94,8 +94,8 @@ async def get_uptime():
 # Start Command Handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("1 Month (£9.00)", callback_data="select_1_month")],
-        [InlineKeyboardButton("Lifetime (£15.00)", callback_data="select_lifetime")],
+        [InlineKeyboardButton("1 Month (£10.00)", callback_data="select_1_month")],
+        [InlineKeyboardButton("Lifetime (£17.00)", callback_data="select_lifetime")],
         [InlineKeyboardButton("Support", callback_data="support")],
     ]
     await update.message.reply_text(
@@ -154,14 +154,14 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = (
             "🚀 **Instant Access with Apple Pay/Google Pay!**\n\n"
             "🎁 **Choose Your VIP Plan:**\n"
-            "💎 Lifetime Access: **£15.00 GBP** 🎉\n"
-            "⏳ 1 Month Access: **£9.00 GBP** 🌟\n\n"
+            "💎 Lifetime Access: **£17.00 GBP** 🎉\n"
+            "⏳ 1 Month Access: **£10.00 GBP** 🌟\n\n"
             "🛒 Click below to pay securely and get **INSTANT VIP access** delivered to your email! 📧\n\n"
             "✅ After payment, click 'I've Paid' to confirm."
         )
         keyboard = [
-            [InlineKeyboardButton("💎 Lifetime (£15.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["lifetime"]))],
-            [InlineKeyboardButton("⏳ 1 Month (£9.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["1_month"]))],
+            [InlineKeyboardButton("💎 Lifetime (£17.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["lifetime"]))],
+            [InlineKeyboardButton("⏳ 1 Month (£10.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["1_month"]))],
             [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
         ]
@@ -170,8 +170,8 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "⚡ **Pay Securely with Crypto!**\n\n"
             f"[Crypto Payment Link]({PAYMENT_INFO['crypto']['link']})\n\n"
             "💎 **Choose Your Plan:**\n"
-            "⏳ 1 Month Access: **$11.00 USD** 🌟\n"
-            "💎 Lifetime Access: **$19 USD** 🎉\n\n"
+            "⏳ 1 Month Access: **$13.00 USD** 🌟\n"
+            "💎 Lifetime Access: **$23 USD** 🎉\n\n"
             "✅ Once you've sent the payment, click 'I've Paid' to confirm."
         )
         keyboard = [
@@ -183,8 +183,8 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "💸 **Easy Payment with PayPal!**\n\n"
             f"`{PAYMENT_INFO['paypal']}`\n\n"
             "💎 **Choose Your Plan:**\n"
-            "⏳ 1 Month Access: **£9.00 GBP** 🌟\n"
-            "💎 Lifetime Access: **£15.00 GBP** 🎉\n\n"
+            "⏳ 1 Month Access: **£10.00 GBP** 🌟\n"
+            "💎 Lifetime Access: **£17.00 GBP** 🎉\n\n"
             "✅ Once payment is complete, click 'I've Paid' to confirm."
         )
         keyboard = [
