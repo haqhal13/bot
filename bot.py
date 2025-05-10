@@ -7,17 +7,17 @@ from datetime import datetime
 from fastapi.responses import JSONResponse
 
 # Constants
-BOT_TOKEN = "7739378344:AAHRj6VmmmS19xCiIOFrdmyfcJ5_gRGXRHc"
+BOT_TOKEN = "7746788670:AAGg2TZtzlokFQmuYlTX2l2bmww_Cnva3pc"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 UPTIME_MONITOR_URL = "https://bot-1-f2wh.onrender.com/uptime"
-SUPPORT_CONTACT = "@ZakiVip1"
+SUPPORT_CONTACT = "@Sebvip"
 ADMIN_CHAT_ID = 834523364  # Replace with the admin's chat ID
 
 # Payment Information
 PAYMENT_INFO = {
     "shopify": {
-        "1_month": "https://5fbqad-qz.myshopify.com/cart/50086610207066:1",
-        "lifetime": "https://5fbqad-qz.myshopify.com/cart/50160363766106:1",
+        "1_month": "https://nt9qev-td.shopify.com/cart/55619895394678:1",
+        "lifetime": "https://nt9qev-td.shopify.com/cart/55619898737014:1",
     },
     "crypto": {"link": "https://t.me/+t5kEU2mSziQ1NTg0"},
     "paypal": "@OFVIPFAN ON PAYPAL",
