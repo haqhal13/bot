@@ -11,7 +11,7 @@ BOT_TOKEN = "7746788670:AAH8BX0M_FZyi40HFAacR9prN74KMD0p1es"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 UPTIME_MONITOR_URL = "https://bot-1-f2wh.onrender.com/uptime"
 SUPPORT_CONTACT = "@Sebvip"
-ADMIN_CHAT_ID = 850625134  # Replace with the admin's chat ID
+ADMIN_CHAT_ID = 7914196017  # Replace with the admin's chat ID
 
 # Payment Information
 PAYMENT_INFO = {
