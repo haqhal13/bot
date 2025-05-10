@@ -16,8 +16,8 @@ ADMIN_CHAT_ID = 834523364  # Replace with the admin's chat ID
 # Payment Information
 PAYMENT_INFO = {
     "shopify": {
-        "1_month": "https://nt9qev-td.shopify.com/cart/55619895394678:1",
-        "lifetime": "https://nt9qev-td.shopify.com/cart/55619898737014:1",
+        "1_month": "https://nt9qev-td.myshopify.com/cart/55619895394678:1",
+        "lifetime": "https://nt9qev-td.myshopify.com/cart/55619898737014:1",
     },
     "crypto": {"link": "https://t.me/+t5kEU2mSziQ1NTg0"},
     "paypal": "@OFVIPFAN ON PAYPAL",
