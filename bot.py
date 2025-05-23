@@ -7,7 +7,7 @@ from datetime import datetime
 from fastapi.responses import JSONResponse
 
 # Constants
-BOT_TOKEN = "7746788670:AAH8BX0M_FZyi40HFAacR9prN74KMD0p1es"
+BOT_TOKEN = "7709257840:AAG6uNoCBSBfMQ5hDvCuxQIvjr_Yq9FqEpQ"
 WEBHOOK_URL = "https://bot-1-f2wh.onrender.com/webhook"
 UPTIME_MONITOR_URL = "https://bot-1-f2wh.onrender.com/uptime"
 SUPPORT_CONTACT = "@Sebvip"
