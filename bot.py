@@ -19,7 +19,7 @@ PAYMENT_INFO = {
         "1_month": "https://nt9qev-td.myshopify.com/cart/55619895394678:1",
         "lifetime": "https://nt9qev-td.myshopify.com/cart/55619898737014:1",
     },
-    "crypto": {"link": "https://t.me/+0ys4_6KtfzsyOTFk"},
+    "crypto": {"link": "https://t.me/+318ocdUDrbA4ODk0"},
     "paypal": "@Aieducation ON PAYPAL F&F only we cant process order if it isnt F&F",
 }
 
@@ -95,7 +95,7 @@ async def get_uptime():
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("1 Month (£10.00)", callback_data="select_1_month")],
-        [InlineKeyboardButton("Lifetime (£17.00)", callback_data="select_lifetime")],
+        [InlineKeyboardButton("Lifetime (£20.00)", callback_data="select_lifetime")],
         [InlineKeyboardButton("Support", callback_data="support")],
     ]
     await update.message.reply_text(
@@ -118,8 +118,8 @@ async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
     plan_text = "LIFETIME" if plan == "lifetime" else "1 MONTH"
     keyboard = [
         [InlineKeyboardButton("💳 Apple Pay/Google Pay 🚀 (Instant Access)", callback_data=f"payment_shopify_{plan}")],
-        [InlineKeyboardButton("⚡ Crypto ⏳ (30 min wait time)", callback_data=f"payment_crypto_{plan}")],
-        [InlineKeyboardButton("📧 PayPal 💌 (30 min wait time)", callback_data=f"payment_paypal_{plan}")],
+        [InlineKeyboardButton("⚡ Crypto ⏳ (30 - 60 min wait time)", callback_data=f"payment_crypto_{plan}")],
+        [InlineKeyboardButton("📧 PayPal 💌 (30 - 60 min wait time)", callback_data=f"payment_paypal_{plan}")],
         [InlineKeyboardButton("💬 Support", callback_data="support")],
         [InlineKeyboardButton("🔙 Go Back", callback_data="back")],
     ]
@@ -127,8 +127,8 @@ async def handle_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE
     message = (
         f"⭐ You have chosen the **{plan_text}** plan.\n\n"
         "💳 **Apple Pay/Google Pay:** 🚀 Instant VIP access (link emailed immediately).\n"
-        "⚡ **Crypto:** (30 min wait time), VIP link sent manually.\n"
-        "📧 **PayPal:**(30 min wait time), VIP link sent manually.\n\n"
+        "⚡ **Crypto:** (30 - 60 min wait time), VIP link sent manually.\n"
+        "📧 **PayPal:**(30 - 60 min wait time), VIP link sent manually.\n\n"
         "🎉 Choose your preferred payment method below and get access today!"
     )
     await query.edit_message_text(
@@ -154,13 +154,13 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = (
             "🚀 **Instant Access with Apple Pay/Google Pay!**\n\n"
             "🎁 **Choose Your VIP Plan:**\n"
-            "💎 Lifetime Access: **£17.00 GBP** 🎉\n"
+            "💎 Lifetime Access: **£20.00 GBP** 🎉\n"
             "⏳ 1 Month Access: **£10.00 GBP** 🌟\n\n"
             "🛒 Click below to pay securely and get **INSTANT VIP access** delivered to your email! 📧\n\n"
             "✅ After payment, click 'I've Paid' to confirm."
         )
         keyboard = [
-            [InlineKeyboardButton("💎 Lifetime (£17.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["lifetime"]))],
+            [InlineKeyboardButton("💎 Lifetime (£20.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["lifetime"]))],
             [InlineKeyboardButton("⏳ 1 Month (£10.00)", web_app=WebAppInfo(url=PAYMENT_INFO["shopify"]["1_month"]))],
             [InlineKeyboardButton("✅ I've Paid", callback_data="paid")],
             [InlineKeyboardButton("🔙 Go Back", callback_data="back")]
@@ -171,7 +171,7 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"[Crypto Payment Link]({PAYMENT_INFO['crypto']['link']})\n\n"
             "💎 **Choose Your Plan:**\n"
             "⏳ 1 Month Access: **$13.00 USD** 🌟\n"
-            "💎 Lifetime Access: **$23 USD** 🎉\n\n"
+            "💎 Lifetime Access: **$27 USD** 🎉\n\n"
             "✅ Once you've sent the payment, click 'I've Paid' to confirm."
         )
         keyboard = [
@@ -184,7 +184,7 @@ async def handle_payment(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"`{PAYMENT_INFO['paypal']}`\n\n"
             "💎 **Choose Your Plan:**\n"
             "⏳ 1 Month Access: **£10.00 GBP** 🌟\n"
-            "💎 Lifetime Access: **£17.00 GBP** 🎉\n\n"
+            "💎 Lifetime Access: **£20.00 GBP** 🎉\n\n"
             "✅ Once payment is complete, click 'I've Paid' to confirm."
         )
         keyboard = [
